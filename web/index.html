@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador de Restaurante</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="barra">
+    <div class="marca">🍽️ <span>Restaurante concurrente</span></div>
+
+    <span id="estadoGeneral" class="pill" data-estado="SIN_INICIAR">SIN INICIAR</span>
+
+    <div class="reloj" title="Tiempo de la simulación (T)">
+      <span id="reloj">0:00 / 0:00</span>
+      <div class="reloj-barra"><div id="relojBarra"></div></div>
+    </div>
+
+    <div class="stats">
+      <span title="Clientes adentro / capacidad P×M">👥 <b id="stAdentro">0</b></span>
+      <span title="Esperando afuera">⏳ <b id="stAfuera">0</b></span>
+      <span title="Clientes que comieron y pagaron">✅ <b id="stPagaron">0</b></span>
+      <span title="Se fueron sin comer por el cierre (no entraron + no llegaron a pedir)">🚪 <b id="stSinComer">0</b></span>
+      <span title="Recaudación">💲 <b id="stRecaudacion">0</b></span>
+    </div>
+
+    <div class="acciones">
+      <button id="btnIniciar" class="btn primario" type="button">▶ Iniciar</button>
+      <button id="btnResumen" class="btn" type="button" hidden>🏁 Resumen</button>
+      <button id="btnTema" class="btn icono" type="button" title="Tema claro/oscuro" aria-label="Cambiar tema">🌓</button>
+    </div>
+  </header>
+
+  <main class="principal">
+    <section class="mapa-caja" aria-label="Mapa del restaurante">
+      <svg id="mapa" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="img"
+           aria-label="Plano del restaurante en movimiento">
+        <g id="capaFondo"></g>
+        <g id="capaDeco"></g>
+        <g id="capaFichas"></g>
+      </svg>
+      <div class="leyenda" id="leyenda"></div>
+    </section>
+
+    <aside class="lateral">
+      <section class="panel">
+        <h2>Personal</h2>
+        <ul id="personal" class="personal"></ul>
+      </section>
+      <section class="panel panel-eventos">
+        <h2>Eventos <span id="cantEventos" class="contador">0</span></h2>
+        <ol id="eventos" class="eventos"></ol>
+      </section>
+    </aside>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-fondo" data-cerrar></div>
+    <div class="modal-caja" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+      <h2 id="modalTitulo">🏁 Simulación terminada</h2>
+      <div id="modalCuerpo"></div>
+      <button class="btn primario" type="button" data-cerrar>Cerrar</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

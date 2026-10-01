@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Informe Entregable 2 - Concurrencia</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 20mm 20mm 20mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #000;
+    }
+  }
+  @page :first {
+    @bottom-center { content: none; }
+  }
+  * { font-family: Arial, Helvetica, sans-serif; color: #000; }
+  html, body { background: #fff; }
+  body { font-size: 10.5pt; line-height: 1.42; margin: 0; text-align: justify; hyphens: auto; }
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; text-align: left; }
+  h1 { font-size: 16pt; margin: 0 0 10pt 0; text-transform: uppercase; letter-spacing: 0.5pt; border-bottom: 1px solid #000; padding-bottom: 3pt; }
+  h2 { font-size: 12.5pt; margin: 16pt 0 6pt 0; }
+  h3 { font-size: 11pt; font-style: italic; margin: 12pt 0 4pt 0; }
+  p { margin: 0 0 7pt 0; orphans: 3; widows: 3; }
+  ul, ol { margin: 0 0 7pt 0; padding-left: 18pt; }
+  li { margin-bottom: 2.5pt; }
+  code { font-family: Arial, Helvetica, sans-serif; font-style: italic; font-size: 1em; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 10pt 0; font-size: 9.3pt; line-height: 1.32; text-align: left; }
+  th, td { border: 0.6pt solid #555; padding: 3pt 5pt; vertical-align: top; }
+  th { font-weight: bold; border-bottom: 1.2pt solid #000; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  td.grupo { font-weight: bold; text-transform: uppercase; font-size: 8.5pt; letter-spacing: 0.4pt; padding-top: 5pt; }
+  tr.g { break-after: avoid; page-break-after: avoid; }
+  h1.sec { margin-top: 20pt; }
+  .salto { break-before: page; page-break-before: always; }
+  .bloque { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Portada */
+  .portada { height: 245mm; display: flex; flex-direction: column; justify-content: space-between; text-align: center; }
+  .portada .arriba { margin-top: 40mm; }
+  .portada .materia { font-size: 12pt; text-transform: uppercase; letter-spacing: 2pt; }
+  .portada .titulo { font-size: 28pt; font-weight: bold; margin: 24mm 0 6mm 0; }
+  .portada .subtitulo { font-size: 16pt; font-style: italic; }
+  .portada .datos { font-size: 11pt; line-height: 1.9; margin-bottom: 10mm; }
+  .portada .datos b { text-transform: uppercase; font-size: 9.5pt; letter-spacing: 1pt; }
+  .regla { border-top: 1px solid #000; width: 60mm; margin: 0 auto; }
+
+  /* Índice */
+  .indice { margin: 0 0 6pt 0; padding-left: 0; list-style: none; }
+  .indice li { margin: 2pt 0; }
+  .indice .e { display: flex; align-items: baseline; }
+  .indice .e .t { flex: 1; border-bottom: 0.6pt dotted #555; margin-right: 4pt; }
+  .indice .e .n { min-width: 14pt; text-align: right; }
+  .indice ul { list-style: none; padding-left: 14pt; margin: 0; }
+
+  .nota { font-size: 9.5pt; font-style: italic; }
+  .flujo { border: 0.6pt solid #555; padding: 6pt 8pt; margin: 4pt 0 10pt 0; font-size: 9.3pt; line-height: 1.5; text-align: left; break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ============================ PORTADA ============================ -->
+<section class="portada">
+  <div class="arriba">
+    <div class="materia">Programación Avanzada 2026</div>
+    <div class="titulo">Entregable 2 – Concurrencia</div>
+    <div class="subtitulo">Simulador de restaurante concurrente</div>
+  </div>
+  <div class="datos">
+    <div class="regla"></div><br>
+    <b>Integrantes</b><br>Ferreiro · Bruschera
+  </div>
+</section>
+
+<!-- ============================ ÍNDICE ============================ -->
+<section class="salto">
+<h1>Contenido</h1>
+<ul class="indice">
+  <li><span class="e"><span class="t"><b>Introducción</b></span><span class="n">2</span></span></li>
+  <li><span class="e"><span class="t"><b>1. Herramientas utilizadas y justificación</b></span><span class="n">2</span></span>
+    <ul>
+      <li><span class="e"><span class="t">1.1 Resumen de herramientas</span><span class="n">3</span></span></li>
+      <li><span class="e"><span class="t">1.2 Patrones de diseño concurrente</span><span class="n">5</span></span></li>
+      <li><span class="e"><span class="t">1.3 Cómo se evitan los deadlocks</span><span class="n">6</span></span></li>
+      <li><span class="e"><span class="t">1.4 Visibilidad de los datos compartidos</span><span class="n">7</span></span></li>
+      <li><span class="e"><span class="t">1.5 Excepciones e interrupciones</span><span class="n">7</span></span></li>
+    </ul></li>
+  <li><span class="e"><span class="t"><b>2. Decisiones de funcionamiento, diseño e implementación</b></span><span class="n">8</span></span>
+    <ul>
+      <li><span class="e"><span class="t">2.1 Interpretaciones del enunciado</span><span class="n">8</span></span></li>
+      <li><span class="e"><span class="t">2.2 Arquitectura: actores y recursos compartidos</span><span class="n">8</span></span></li>
+      <li><span class="e"><span class="t">2.3 Flujo de cada actor</span><span class="n">9</span></span></li>
+      <li><span class="e"><span class="t">2.4 Cierre ordenado al cumplirse T</span><span class="n">10</span></span></li>
+      <li><span class="e"><span class="t">2.5 Display y log</span><span class="n">10</span></span></li>
+    </ul></li>
+  <li><span class="e"><span class="t"><b>3. Conclusión</b></span><span class="n">11</span></span></li>
+</ul>
+
+<h2>Introducción</h2>
+<p>El trabajo es un programa en Java 17, sin dependencias externas, que simula un restaurante. Los clientes, mozos, cocineros y cajeros se ejecutan de forma concurrente, cada uno en su propio hilo, durante un tiempo <b>T</b>. Al cumplirse T el restaurante cierra de forma ordenada: se cierran las puertas, los clientes que todavía no hicieron su pedido se retiran, los que ya pidieron terminan normalmente, el personal sigue trabajando hasta que no quedan clientes y, por último, terminan todos los hilos y se liberan todos los recursos.</p>
+<p>Todas las constantes del enunciado (T, M, P, Z, C, Y y los rangos TP, TM, TQ, TZ, TR, TL, TC, TY) están en <code>restaurante.config.Config</code> como <code>static final</code>; cada menú tiene su propio rango TC. Cada cambio se notifica a un hilo <b>Display</b> a través de una cola, y se registra en un archivo de log de texto.</p>
+<p>El grupo tiene dos integrantes, por lo que los requerimientos extra del anexo no forman parte del alcance.</p>
+</section>
+
+<!-- ============================ 1. HERRAMIENTAS ============================ -->
+<section>
+<h1 class="sec">1. Herramientas utilizadas y justificación</h1>
+
+<p>El criterio general fue <b>un mecanismo de sincronización por recurso</b>, elegido según la forma del problema de ese recurso, en lugar de un lock global que serializaría a todos los actores. La tabla resume cada herramienta, dónde se usa y por qué se eligió.</p>
+
+<h2>1.1 Resumen de herramientas</h2>
+<table>
+  <thead><tr><th style="width:19%">Herramienta</th><th style="width:26%">Dónde se usa (clase · método)</th><th>Para qué / por qué</th></tr></thead>
+  <tbody>
+  <tr class="g"><td colspan="3" class="grupo">Exclusión mutua</td></tr>
+  <tr><td><b>synchronized</b> (monitor)</td>
+      <td><code>Mesa</code>, <code>SalaDeEspera</code>, <code>LogArchivo</code></td>
+      <td>Protege la sección crítica de cada mesa y de la sala, donde varios hilos (clientes, mozos y el coordinador) leen y modifican el mismo estado. Junta el estado y las esperas por condición en un solo objeto, y resuelve la condición de carrera entre “el mozo toma el pedido” y “se cierra la mesa”: gana el primero que entra al monitor.</td></tr>
+  <tr><td><b>ReentrantLock</b> (justo) + <b>Condition</b></td>
+      <td><code>Cocina</code>: <code>recibirPedido</code>, <code>tomarPlato</code> (<code>hayPlatos.await()</code>), <code>platoListo</code>, <code>cerrar</code> (<code>signalAll</code>)</td>
+      <td>La operación del cocinero no es “sacar el primero de la cola” sino “buscar, en el primer pedido que lo tenga, un plato sin cocinar y marcarlo”, sin sacar el pedido, porque varios cocineros pueden repartirse los platos de un mismo pedido. Buscar y marcar tiene que ser atómico. El lock justo evita la inanición de un cocinero; la <code>Condition</code> con nombre deja explícito qué se espera. <code>unlock()</code> siempre en <code>finally</code>.</td></tr>
+  <tr><td><b>ReentrantReadWriteLock</b></td>
+      <td><code>EstadoRestaurante</code>: <code>notificar</code> (write lock), <code>snapshotActual</code> (read lock)</td>
+      <td>Muchos escritores (todos los actores notifican sus cambios) y lectores esporádicos (la verificación final y la consulta del estado actual). Bajo el write lock se aplica el cambio, se toma la foto y se encola el evento en un solo paso atómico; así el orden de la cola es el orden real de los cambios.</td></tr>
+  <tr><td><b>Semaphore</b>(P·M, justo)</td>
+      <td><code>Restaurante.esperarParaEntrar</code> (<code>tryAcquire</code> con timeout), <code>Restaurante.salir</code> (<code>release</code>)</td>
+      <td>Modela la capacidad del local: entran como máximo P·M clientes y el resto espera afuera. <code>tryAcquire(timeout)</code> en un bucle permite que el cliente que espera afuera note el cierre y se retire. El <code>release</code> está en el <code>finally</code> de <code>Cliente.run</code>: el permiso siempre se devuelve.</td></tr>
+  <tr><td><b>Clases atómicas</b></td>
+      <td><code>Restaurante.abierto</code> (<code>AtomicBoolean</code>, <code>compareAndSet</code>), <code>Contadores</code> (<code>AtomicInteger</code>), <code>Pedido.platosPendientes</code>, <code>Caja.recaudacion</code> (<code>AtomicLong</code>), <code>ColaMozos.secuencia</code></td>
+      <td>Banderas y contadores que se actualizan desde muchos hilos con una operación indivisible (CAS), sin locks y con visibilidad garantizada. <code>Pedido.platoListo() == 0</code> (un <code>decrementAndGet</code>, ejecutado además con el lock de la cocina) asegura que solo el cocinero que termina el último plato avise a los mozos.</td></tr>
+
+  <tr class="g"><td colspan="3" class="grupo">Sincronización con barrera</td></tr>
+  <tr><td><b>CyclicBarrier</b>(P, acción)</td>
+      <td>Una por mesa: <code>Mesa.esperarCompaneros</code> (<code>await</code>); acción de barrera <code>Mesa.llamarMozo</code></td>
+      <td>“Luego de que los P clientes seleccionan el menú llaman a un mozo” es exactamente una barrera de P partes. La acción la ejecuta una sola vez el último en llegar. Es cíclica: la misma barrera sirve para cada grupo que ocupa la mesa.</td></tr>
+  <tr><td><b>CountDownLatch</b></td>
+      <td><code>Simulacion.senalCierre</code> (1) y <code>Simulacion.empleadosTerminados</code> (Z+C+Y)</td>
+      <td>Señales de un solo uso. <code>senalCierre</code> la libera el temporizador en T; <code>GeneradorClientes</code> espera sobre ella con <code>await(espera)</code> en lugar de <code>sleep</code>, así se despierta al instante con el cierre. <code>empleadosTerminados</code> es una barrera de finalización: cada empleado hace <code>countDown</code> en su <code>finally</code>.</td></tr>
+
+  <tr class="g"><td colspan="3" class="grupo">Pasaje de mensajes</td></tr>
+  <tr><td><b>PriorityBlockingQueue</b></td>
+      <td><code>ColaMozos</code> (<code>TareaMozo</code>)</td>
+      <td>Buzón de los mozos. Cualquier mozo libre toma la tarea más prioritaria (los mozos no tienen mesas asignadas). <code>take()</code> los bloquea sin consumir CPU cuando no hay trabajo.</td></tr>
+  <tr><td><b>LinkedBlockingQueue</b></td>
+      <td><code>Caja</code> (<code>Pago</code>), <code>EstadoRestaurante.colaEventos</code> (<code>Evento</code>)</td>
+      <td>Cola única FIFO de pago para los Y cajeros, y cola de notificaciones que consume el Display en orden. Todas las colas son <b>ilimitadas</b>: encolar nunca bloquea (clave para evitar deadlocks, ver 1.3).</td></tr>
+
+  <tr class="g"><td colspan="3" class="grupo">Pool de hilos</td></tr>
+  <tr><td><b>Executors</b></td>
+      <td><code>Simulacion.correr</code>: <code>newFixedThreadPool</code> (Z, C, Y), <code>newCachedThreadPool</code> (clientes), <code>newSingleThreadExecutor</code> (generador, Display), <code>newScheduledThreadPool(1)</code> (temporizador)</td>
+      <td>Separan la gestión de hilos de la lógica de cada actor. Personal en cantidad fija: pool fijo. Clientes en cantidad variable: pool <i>cached</i>. Display en un único hilo, para garantizar el orden. <code>shutdown()</code> + <code>awaitTermination()</code> dan un cierre controlado. <code>FabricaHilos</code> nombra los hilos e instala un <code>UncaughtExceptionHandler</code>.</td></tr>
+
+  <tr class="g"><td colspan="3" class="grupo">wait / notify / notifyAll</td></tr>
+  <tr><td><b>wait</b> / <b>notifyAll</b></td>
+      <td><code>Mesa</code>: <code>esperarMozo</code>, <code>esperarComida</code>, <code>elegir</code>, <code>tomarPedido</code>, <code>servir</code>, <code>cerrar</code>… · <code>SalaDeEspera</code>: <code>esperarMesa</code>, <code>ingresar</code>, <code>mesaLiberada</code>, <code>cerrar</code></td>
+      <td>Esperas por condición dentro de los monitores (“ya vino el mozo”, “ya está servida”, “el grupo tiene mesa”, “se cerró”). Se usa <code>notifyAll</code> y no <code>notify</code> porque en el mismo monitor esperan hilos por condiciones distintas. Todo <code>wait</code> está dentro de un <code>while</code> que vuelve a evaluar la condición.</td></tr>
+  <tr><td><b>wait(timeout)</b></td>
+      <td><code>Mesa.elegir</code> (<code>TimeUnit.NANOSECONDS.timedWait</code>)</td>
+      <td>Elegir el menú tarda TM, pero si el restaurante cierra el cliente tiene que enterarse enseguida. Un <code>sleep</code> no se puede despertar sin interrumpir el hilo; <code>wait(timeout)</code> en un bucle sí se despierta con el <code>notifyAll</code> de <code>Mesa.cerrar()</code>.</td></tr>
+
+  <tr class="g"><td colspan="3" class="grupo">Complementarias</td></tr>
+  <tr><td><b>CompletableFuture</b></td>
+      <td><code>Caja.pagar</code> lo devuelve; <code>Caja.cobrar</code> lo completa; <code>Cliente</code> hace <code>get()</code></td>
+      <td>El cliente espera <i>su</i> ticket sin buscarlo en una estructura compartida.</td></tr>
+  <tr><td><b>volatile</b></td>
+      <td><code>EstadoRestaurante.inicioNanos</code>, <code>Simulacion.resultado</code>, <code>Display.ultimaSecuencia</code></td>
+      <td>Un único escritor y varios lectores: no hace falta exclusión mutua, solo visibilidad.</td></tr>
+  <tr><td><b>Objetos inmutables</b></td>
+      <td><code>Snapshot</code> (record con <code>List.copyOf</code>), <code>Evento</code>, <code>TareaMozo</code>, <code>Pago</code>, <code>Ticket</code>, <code>Parametros</code></td>
+      <td>Seguros para hilos por construcción: los mensajes y las fotos del estado se comparten sin locks.</td></tr>
+  <tr><td><b>CopyOnWriteArrayList</b>, <b>ThreadLocalRandom</b></td>
+      <td><code>FabricaHilos.hilos</code>; <code>Aleatorio</code></td>
+      <td>Lista de hilos creados recorrible sin lock; un generador aleatorio por hilo, sin estado compartido ni contención.</td></tr>
+  </tbody>
+</table>
+
+<h3>Alternativas descartadas</h3>
+<ul>
+  <li><b>Un lock global para todo el restaurante:</b> correcto pero sin concurrencia real. Se prefirió un lock por recurso.</li>
+  <li><b>BlockingQueue para la cocina:</b> no permite tomar un plato dejando el pedido en la cola para otro cocinero.</li>
+  <li><b>acquire() bloqueante en la puerta y sleep al elegir:</b> el hilo no se enteraría del cierre. Se usaron <code>tryAcquire(timeout)</code> y <code>wait(timeout)</code>.</li>
+  <li><b>Phaser:</b> innecesario, porque las partes de cada mesa son fijas (P) y la acción de barrera de <code>CyclicBarrier</code> expresa la regla exacta.</li>
+  <li><b>System.exit para terminar:</b> ocultaría hilos colgados. El programa termina porque terminan todos sus hilos no-daemon.</li>
+</ul>
+
+<h2>1.2 Patrones de diseño concurrente</h2>
+
+<h3>Productor-Consumidor (patrón principal)</h3>
+<p>Es el patrón que estructura toda la simulación. Aparece en cuatro búferes compartidos:</p>
+<table>
+  <thead><tr><th style="width:42%">Productores</th><th style="width:33%">Búfer</th><th>Consumidores</th></tr></thead>
+  <tbody>
+  <tr><td>Mesas (acción de barrera: TOMAR_PEDIDO), cocineros (pedido completo: SERVIR), último cliente en irse (LIMPIAR)</td><td><code>ColaMozos</code> — <code>PriorityBlockingQueue&lt;TareaMozo&gt;</code></td><td>Z mozos</td></tr>
+  <tr><td>Mozos (<code>Cocina.recibirPedido</code>)</td><td><code>Cocina</code> — lista FIFO de pedidos con <code>ReentrantLock</code> + <code>Condition</code></td><td>C cocineros</td></tr>
+  <tr><td>Clientes (<code>Caja.pagar</code>)</td><td><code>Caja</code> — <code>LinkedBlockingQueue&lt;Pago&gt;</code> (cola única)</td><td>Y cajeros</td></tr>
+  <tr><td>Todos los actores (<code>EstadoRestaurante.notificar</code>)</td><td><code>LinkedBlockingQueue&lt;Evento&gt;</code></td><td>1 Display</td></tr>
+  </tbody>
+</table>
+<p><b>Justificación.</b> El enunciado describe literalmente esta situación: los mozos “se quedan esperando” si nadie los llama, existe “una única cola de clientes” para los cajeros y el display “recibe las notificaciones de cada cambio, en una cola, y los va procesando en orden”. El patrón además:</p>
+<ul>
+  <li><b>desacopla</b> al productor del consumidor: ningún mozo tiene mesas asignadas y cualquier cajero libre atiende al primero de la fila;</li>
+  <li><b>evita la espera activa:</b> <code>take()</code> bloquea sin consumir CPU;</li>
+  <li><b>preserva el orden</b> (FIFO) y, con un único consumidor, garantiza que el Display muestre los cambios en el orden en que ocurrieron;</li>
+  <li><b>permite un cierre limpio con <i>poison pills</i></b> (<code>TareaMozo.fin()</code>, <code>Pago.finDeTurno()</code>, <code>Evento.FIN</code>): el consumidor termina después de procesar todo lo anterior;</li>
+  <li><b>contribuye a evitar deadlocks:</b> con búferes ilimitados, producir nunca bloquea.</li>
+</ul>
+
+<h3>Monitor</h3>
+<p><code>Mesa</code> y <code>SalaDeEspera</code> encapsulan su estado y lo protegen con su lock intrínseco; las esperas por condición se hacen con <code>wait</code>/<code>notifyAll</code> y ningún otro objeto toca ese estado. Se eligió porque cada mesa tiene <b>varias condiciones</b> sobre el mismo estado (eligiendo, esperando mozo, esperando comida, servida, cancelada) esperadas por distintos hilos, y el monitor las concentra en un solo lugar con exclusión mutua.</p>
+
+<h3>Barrier</h3>
+<p>Cada mesa tiene una <code>CyclicBarrier(P, this::llamarMozo)</code>: nadie llama al mozo hasta que eligieron los P, y la acción de barrera hace la llamada una sola vez. Se eligió porque es la traducción directa de la regla del enunciado. También se usa una barrera de finalización (<code>CountDownLatch empleadosTerminados</code>) para saber cuándo terminó todo el personal.</p>
+
+<h3>Working threads</h3>
+<p>Los actores son <code>Runnable</code> ejecutados por pools de <code>Executors</code>: cantidad fija de hilos de trabajo para el personal (Z, C, Y) y elástica para los clientes. Separa “qué hace cada actor” de “cómo se crean y terminan los hilos” y da un apagado controlado.</p>
+
+<h3>Future / Promise</h3>
+<p><code>Caja.pagar</code> devuelve un <code>CompletableFuture&lt;Ticket&gt;</code> (la promesa) que completa el cajero en <code>Caja.cobrar</code>; el cliente espera el resultado con <code>get()</code>. Así cada cliente espera exactamente su cobro, sin estructura compartida adicional.</p>
+
+<h3>Read-Write Lock</h3>
+<p><code>EstadoRestaurante</code> aplica el problema de lectores y escritores con <code>ReentrantReadWriteLock</code>: varios lectores pueden obtener una foto a la vez, y cada escritura es exclusiva.</p>
+
+<h2>1.3 Cómo se evitan los deadlocks</h2>
+<p>Un deadlock requiere una <b>espera circular</b>: cada hilo retiene un recurso y espera otro que retiene el siguiente. El diseño elimina esa posibilidad con estas reglas:</p>
+<ol>
+  <li><b>No se anidan locks entre recursos.</b> El monitor de una mesa nunca toma el de otra mesa ni el de la sala; la sala lleva su propia lista de mesas libres y no entra al monitor de las mesas. El mozo avisa a la sala (<code>SalaDeEspera.mesaLiberada</code>) <i>después</i> de salir del monitor de la mesa, y el cocinero encola SERVIR <i>después</i> de soltar el lock de la cocina.</li>
+  <li><b>Orden fijo barrera → mesa.</b> Sin contar el lock hoja y las colas (puntos 3 y 4), la única cadena entre locks es la acción de barrera (<code>Mesa.llamarMozo</code>), que corre con el lock interno de la <code>CyclicBarrier</code> y entra al monitor de la mesa. Nunca se toma en el orden inverso: <code>Mesa.terminarLimpieza()</code> hace el <code>reset()</code> de la barrera <i>antes</i> de entrar al monitor, y <code>Mesa.esperarCompaneros()</code> no es <code>synchronized</code> (si lo fuera, el primer cliente esperaría en la barrera reteniendo el monitor y los demás no podrían llegar a ella).</li>
+  <li><b>Lock hoja.</b> El write lock de <code>EstadoRestaurante</code> se toma teniendo otro lock (por ejemplo desde <code>Mesa.servir</code> o desde la cocina), pero mientras se lo tiene no se toma ningún otro: solo se modifica la vista y se agrega a una cola ilimitada. Un lock que siempre es el último de la cadena no puede cerrar un ciclo.</li>
+  <li><b>Colas ilimitadas.</b> <code>put</code>/<code>add</code> nunca bloquean, así que encolar con un monitor tomado (<code>Mesa.llamarMozo</code> → <code>ColaMozos.encolar</code>) no deja a nadie esperando. Las únicas esperas indefinidas son <code>take()</code>, <code>await()</code>, <code>wait()</code> y el <code>get()</code> del pago, y en ellas el hilo no retiene ningún otro lock (<code>wait</code> y <code>Condition.await</code> liberan el propio).</li>
+  <li><b>La barrera siempre se completa.</b> Los P clientes de un grupo llegan siempre a <code>await()</code>, incluso si la mesa se canceló por el cierre; la acción de barrera ve <code>cancelada</code> y no llama al mozo.</li>
+  <li><b>Esperas con límite.</b> La puerta usa <code>tryAcquire</code> con timeout (<code>Config.ESPERA_PUERTA_MS</code>). El coordinador espera pools y latches con un máximo (<code>Config.TIMEOUT_CIERRE_MS</code>); si se superara, vuelca la pila de todos los hilos al log (<code>Simulacion.volcarHilos</code>) y fuerza con <code>shutdownNow</code>. Es una red de seguridad, no parte del funcionamiento normal.</li>
+</ol>
+<p><b>Inanición.</b> Las colas de caja, cocina y eventos son FIFO (la de mozos, FIFO dentro de cada prioridad) y el <code>Semaphore</code> y el <code>ReentrantLock</code> de la cocina son justos. Las prioridades de los mozos están acotadas (ver 2.1). <b>Bloqueo activo:</b> no hay reintentos que se cedan el paso mutuamente; el único reintento es el <code>tryAcquire</code> de la puerta, que no cede nada. <b>Self-deadlock:</b> todos los locks usados son reentrantes y cada cliente toma un único permiso del semáforo.</p>
+
+<h2>1.4 Visibilidad de los datos compartidos</h2>
+<p>Para que ningún hilo lea un valor viejo de la caché, todo dato compartido se accede a través de una herramienta que establece una relación <i>happens-before</i> del modelo de memoria de Java:</p>
+<table class="bloque">
+  <thead><tr><th style="width:38%">Acción del hilo que escribe</th><th style="width:34%">Acción del hilo que lee</th><th>Dónde</th></tr></thead>
+  <tbody>
+  <tr><td>Salir de un bloque <code>synchronized</code></td><td>Entrar al mismo monitor</td><td><code>Mesa</code>, <code>SalaDeEspera</code></td></tr>
+  <tr><td><code>unlock()</code></td><td><code>lock()</code> del mismo lock</td><td><code>Cocina</code>, <code>EstadoRestaurante</code></td></tr>
+  <tr><td><code>put()</code> / <code>add()</code> en una <code>BlockingQueue</code></td><td><code>take()</code> del mismo elemento</td><td>Mozos, cajeros, Display</td></tr>
+  <tr><td><code>release()</code></td><td><code>tryAcquire()</code></td><td>Puerta</td></tr>
+  <tr><td><code>countDown()</code></td><td>Retorno de <code>await()</code></td><td>Latches</td></tr>
+  <tr><td><code>complete()</code> del <code>CompletableFuture</code></td><td>Retorno de <code>get()</code></td><td>Pago</td></tr>
+  <tr><td>Escritura de un <code>volatile</code> o atómico</td><td>Lectura de esa variable</td><td><code>abierto</code>, contadores, <code>inicioNanos</code></td></tr>
+  </tbody>
+</table>
+<p>Por eso, por ejemplo, <code>Plato.estado</code> no necesita <code>volatile</code>: solo se lee y escribe con el lock de la cocina tomado. Los mensajes (<code>TareaMozo</code>, <code>Pago</code>, <code>Evento</code>) son inmutables y se publican a través de colas concurrentes (publicación segura).</p>
+
+<h2>1.5 Excepciones e interrupciones</h2>
+<ul>
+  <li><b>InterruptedException:</b> se captura, se restaura el flag con <code>Thread.currentThread().interrupt()</code> y el hilo termina ordenadamente.</li>
+  <li><b>Los recursos se liberan en <code>finally</code>:</b> <code>Cliente</code> devuelve el permiso de la puerta; <code>Mozo</code>, <code>Cocinero</code> y <code>Cajero</code> notifican que terminaron y hacen <code>countDown</code>; <code>Cocina</code> y <code>EstadoRestaurante</code> hacen <code>unlock</code>.</li>
+  <li><b>BrokenBarrierException:</b> cancela la ocupación de la mesa (<code>Mesa.marcarCancelada</code>); la barrera se resetea al limpiar la mesa.</li>
+  <li><b>ExecutionException</b> del futuro de pago se informa como error del cliente.</li>
+  <li><b>El coordinador no abandona el cierre:</b> si se lo interrumpe, lo anota, sigue esperando y restaura la interrupción al final.</li>
+  <li><b>El Display no muere</b> por un error al procesar un evento: lo registra y sigue con el siguiente. Las excepciones no capturadas de cualquier hilo las registra el <code>UncaughtExceptionHandler</code> en consola y log.</li>
+</ul>
+</section>
+
+<!-- ============================ 2. DECISIONES ============================ -->
+<section>
+<h1 class="sec">2. Decisiones de funcionamiento, diseño e implementación</h1>
+
+<h2>2.1 Interpretaciones del enunciado</h2>
+<ul>
+  <li><b>“Realizó su pedido” significa que el mozo ya lo tomó</b> (<code>Mesa.tomarPedido()</code> ya se ejecutó). Aunque la mesa haya elegido y llamado al mozo, si cierra antes de que el mozo llegue, sus clientes se retiran sin pedir; “cuando el mozo llega hacen el pedido”.</li>
+  <li><b>Capacidad P·M.</b> Un cliente ocupa un lugar desde que entra hasta que sale del local, después de pagar. Una mesa sucia no reduce la capacidad: los que entran esperan en la sala hasta que haya mesa libre.</li>
+  <li><b>Grupos.</b> Los clientes se agrupan de a P en orden de entrada; los grupos completos reciben mesas libres en orden FIFO. Un grupo incompleto se queda esperando, como pide el enunciado.</li>
+  <li><b>Prioridades del mozo: SERVIR &gt; TOMAR_PEDIDO &gt; LIMPIAR</b> (<code>TipoTarea</code>), y FIFO dentro de la misma prioridad (número de secuencia en <code>TareaMozo.compareTo</code>). Servir es lo más urgente porque la comida ya está lista; tomar pedidos alimenta a la cocina; limpiar puede esperar. El riesgo de inanición de LIMPIAR está acotado: como mucho hay una tarea SERVIR o TOMAR_PEDIDO por mesa ocupada y una mesa sucia no genera nuevas, así que al agotarse los mozos limpian. La poison pill FIN tiene la prioridad más baja, de modo que en el cierre primero se completa toda la limpieza.</li>
+  <li><b>Varios cocineros por pedido.</b> “Un cocinero libre toma del primer pedido de la cola algún menú sin cocinar”: si el primer pedido tiene varios platos pendientes, otro cocinero toma el siguiente plato del mismo pedido; solo cuando no quedan pendientes se pasa al segundo pedido. El que completa el último plato es el único que avisa a los mozos.</li>
+  <li><b>Un plato por cliente;</b> cada cliente paga el suyo.</li>
+  <li><b>La mesa queda sucia cuando se va el último cliente</b> y queda LIBRE cuando un mozo termina de limpiarla. Las mesas canceladas por el cierre también se limpian, así que al final todas quedan libres.</li>
+</ul>
+
+<h2>2.2 Arquitectura: actores y recursos compartidos</h2>
+<p>Cada actor es un hilo; los recursos compartidos son objetos pasivos que encapsulan su propia sincronización. El código se organiza en paquetes: <code>actores</code>, <code>recursos</code>, <code>modelo</code>, <code>estado</code>, <code>display</code>, <code>simulacion</code> y <code>config</code>.</p>
+<table>
+  <thead><tr><th style="width:24%">Actor (hilo)</th><th style="width:30%">Pool</th><th>Recursos compartidos que usa</th></tr></thead>
+  <tbody>
+  <tr><td><code>Cliente</code></td><td><code>newCachedThreadPool</code></td><td>Puerta (<code>Semaphore</code>), <code>SalaDeEspera</code>, <code>Mesa</code>, <code>Caja</code>, <code>ColaMozos</code> (LIMPIAR)</td></tr>
+  <tr><td><code>Mozo</code> ×Z</td><td><code>newFixedThreadPool(Z)</code></td><td><code>ColaMozos</code>, <code>Mesa</code>, <code>Cocina</code>, <code>SalaDeEspera</code></td></tr>
+  <tr><td><code>Cocinero</code> ×C</td><td><code>newFixedThreadPool(C)</code></td><td><code>Cocina</code>, <code>ColaMozos</code></td></tr>
+  <tr><td><code>Cajero</code> ×Y</td><td><code>newFixedThreadPool(Y)</code></td><td><code>Caja</code></td></tr>
+  <tr><td><code>GeneradorClientes</code></td><td><code>newSingleThreadExecutor</code></td><td>Pool de clientes, <code>senalCierre</code></td></tr>
+  <tr><td><code>Display</code></td><td><code>newSingleThreadExecutor</code></td><td>Cola de eventos, <code>LogArchivo</code></td></tr>
+  <tr><td>Temporizador</td><td><code>newScheduledThreadPool(1)</code></td><td>Libera <code>senalCierre</code> a los T ms</td></tr>
+  <tr><td>Coordinador</td><td>hilo que llama a <code>Simulacion.ejecutar</code></td><td>Todos: ejecuta el cierre ordenado</td></tr>
+  </tbody>
+</table>
+<p><code>Restaurante</code> agrupa los recursos (puerta, bandera <code>abierto</code>, mesas, sala, cocina, caja, cola de mozos y contadores). Todos los actores informan sus cambios a <code>EstadoRestaurante</code>, que es el único punto de notificación.</p>
+
+<p>Estados de una mesa (<code>EstadoMesa</code>), protegidos por su monitor:</p>
+<div class="flujo">
+  LIBRE → ELIGIENDO → (barrera) ESPERANDO_MOZO → TOMANDO_PEDIDO → ESPERANDO_COMIDA → SIRVIENDO → COMIENDO → SUCIA → LIMPIANDO → LIBRE<br>
+  <i>Si cierra antes de</i> TOMANDO_PEDIDO: <i>la ocupación se cancela, los clientes se retiran sin pedir y la mesa pasa a</i> SUCIA.
+</div>
+
+<h2>2.3 Flujo de cada actor</h2>
+<p><b>Cliente</b> (<code>Cliente.run</code>): espera afuera con <code>Restaurante.esperarParaEntrar()</code>; entra con <code>SalaDeEspera.ingresar()</code> y se suma al grupo en formación; espera mesa con <code>SalaDeEspera.esperarMesa()</code> (<code>wait</code>); se sienta (<code>Mesa.sentarse</code>), elige el menú al azar durante TM (<code>Mesa.elegir</code>) y espera a sus compañeros en la barrera (<code>Mesa.esperarCompaneros</code>); el último llama al mozo. Espera al mozo (<code>Mesa.esperarMozo</code>): si devuelve <code>false</code> la mesa se canceló y se retira sin pedir. Si no, espera la comida (<code>Mesa.esperarComida</code>), come durante TQ, paga (<code>Caja.pagar</code> + <code>get()</code>) y se retira (<code>Mesa.retirarse</code>); si es el último de la mesa, encola LIMPIAR. En el <code>finally</code> devuelve el permiso de la puerta.</p>
+<p><b>Mozo</b> (<code>Mozo.run</code>): hace <code>take()</code> sobre <code>ColaMozos</code> y atiende la tarea recibida.</p>
+<ul>
+  <li><i>TOMAR_PEDIDO:</i> <code>Mesa.tomarPedido()</code>; si devuelve <code>null</code> (el cierre ganó la carrera) descarta la tarea. Si no, anota durante TZ, marca <code>Mesa.pedidoEnCocina()</code> y entrega con <code>Cocina.recibirPedido()</code>.</li>
+  <li><i>SERVIR:</i> <code>Mesa.empezarAServir()</code>, espera TR y <code>Mesa.servir()</code>, que despierta a los clientes.</li>
+  <li><i>LIMPIAR:</i> <code>Mesa.empezarLimpieza()</code>, espera TL, <code>Mesa.terminarLimpieza()</code> y luego, fuera del monitor, <code>SalaDeEspera.mesaLiberada()</code>.</li>
+  <li><i>FIN:</i> termina (poison pill).</li>
+</ul>
+<p><b>Cocinero</b> (<code>Cocinero.run</code>): <code>Cocina.tomarPlato()</code> (espera en la <code>Condition</code> si no hay platos), cocina durante el TC del menú y llama a <code>Cocina.platoListo()</code>; si el pedido quedó completo, encola SERVIR. Termina cuando <code>tomarPlato()</code> devuelve <code>null</code> (cocina cerrada y sin platos pendientes).</p>
+<p><b>Cajero</b> (<code>Cajero.run</code>): <code>Caja.tomar()</code>, cobra durante TY y <code>Caja.cobrar()</code> completa el futuro del cliente. Termina con la poison pill <code>Pago.finDeTurno()</code>.</p>
+
+<h2>2.4 Cierre ordenado al cumplirse T</h2>
+<p>El coordinador (<code>Simulacion.correr</code>) espera <code>senalCierre</code> y ejecuta el cierre en este orden:</p>
+<ol>
+  <li><b>Se cierran las puertas:</b> <code>Restaurante.cerrarPuertas()</code> pone <code>abierto = false</code> con <code>compareAndSet</code>. El generador, despertado por el latch, deja de crear clientes; los que esperan afuera salen de su bucle <code>tryAcquire</code> y se retiran. Si alguno obtuvo permiso en ese instante, <code>SalaDeEspera.ingresar()</code> verifica <code>abierto</code> dentro del monitor y lo rechaza. Desde ahí la sala tampoco asigna mesas nuevas.</li>
+  <li><b>Se cierra la sala:</b> <code>SalaDeEspera.cerrar()</code> hace <code>notifyAll</code>; los grupos incompletos y los que esperaban mesa se retiran sin pedir.</li>
+  <li><b>Se cierra cada mesa:</b> <code>Mesa.cerrar()</code> cancela la ocupación si el pedido no fue tomado y hace <code>notifyAll</code>: los que eligen cortan la espera, todos atraviesan la barrera (que no llama al mozo) y los que esperaban al mozo se retiran.</li>
+  <li><b>Los que ya pidieron terminan normalmente</b> (comen, pagan y se van); el coordinador hace <code>shutdown()</code> + <code>awaitTermination()</code> del pool de clientes.</li>
+  <li><b>El personal termina:</b> Z poison pills a los mozos (prioridad mínima, así primero limpian lo pendiente), <code>Cocina.cerrar()</code> con <code>signalAll</code> a los cocineros e Y poison pills a los cajeros. El coordinador espera con <code>empleadosTerminados.await()</code>.</li>
+  <li><b>Se apagan todos los pools</b> (<code>shutdown</code> + <code>awaitTermination</code>).</li>
+  <li><b>El Display vacía su cola:</b> se encola <code>Evento.FIN</code>; el Display procesa todo lo anterior y termina. Luego se verifican invariantes de cierre (nadie adentro, mesas libres, colas vacías, ningún hilo vivo) y se cierra el log.</li>
+</ol>
+<p><b>Carrera “el mozo toma el pedido” contra “se cierra la mesa”.</b> <code>Mesa.tomarPedido</code> y <code>Mesa.cerrar</code> son <code>synchronized</code> sobre la misma mesa, así que se ejecutan una tras otra. Si entra primero <code>tomarPedido</code>, queda <code>pedidoTomado = true</code> y el cierre no cancela nada. Si entra primero <code>cerrar</code>, queda <code>cancelada = true</code> y <code>tomarPedido</code> devuelve <code>null</code>. No existe un estado intermedio.</p>
+
+<h2>2.5 Display y log</h2>
+<ul>
+  <li><b>Un solo punto de notificación.</b> Cada actor llama a <code>EstadoRestaurante.notificar(actor, descripción, cambio)</code>. Bajo el write lock se aplica el cambio sobre una <code>Vista</code> privada, se arma un <code>Snapshot</code> inmutable y se encola el <code>Evento</code> con un número de secuencia. Así cada evento lleva el estado completo del restaurante, con todos los actores, <b>del momento en que se mandó la notificación</b>, aunque el Display lo procese más tarde. Mostrar el estado nunca requiere tomar los locks de las mesas o de la cocina.</li>
+  <li><b>Un solo consumidor.</b> El hilo <code>Display</code> corre en un <code>newSingleThreadExecutor</code>, consume la <code>LinkedBlockingQueue&lt;Evento&gt;</code> en orden FIFO y verifica que las secuencias sean crecientes. Por cada evento escribe la acción y el estado completo en el log y lo muestra por consola.</li>
+  <li><b>Después de T el Display sigue.</b> Su poison pill se encola recién cuando terminaron todos los actores, de modo que muestra todos los cambios pendientes y finaliza cuando la cola queda vacía.</li>
+  <li><b>Log.</b> <code>LogArchivo</code> escribe en <code>logs/simulacion-&lt;fecha&gt;.log</code>; sus métodos son <code>synchronized</code> porque, además del Display, escriben el coordinador y el manejador de excepciones.</li>
+</ul>
+</section>
+
+<!-- ============================ 3. CONCLUSIÓN ============================ -->
+<section>
+<h1 class="sec">3. Conclusión</h1>
+
+<h2>Producto desarrollado</h2>
+<p>El simulador cumple los requerimientos funcionales y técnicos del enunciado: cuatro roles que se ejecutan de forma concurrente, cierre ordenado en T con todas sus reglas, display en orden con el estado completo de cada momento y log en archivo. Usa todas las herramientas obligatorias (<code>synchronized</code>, <code>ReentrantLock</code>, <code>ReentrantReadWriteLock</code>, <code>Semaphore</code> y clases atómicas para exclusión mutua; <code>CyclicBarrier</code> y <code>CountDownLatch</code> como barreras; <code>BlockingQueue</code> para pasaje de mensajes; <code>Executors</code>; <code>wait</code>/<code>notifyAll</code>) y se apoya en los patrones Productor-Consumidor, Monitor, Barrier, Working threads, Future-Promise y Read-Write Lock. Al terminar cada corrida se verifica que no queden clientes, mesas ocupadas, mensajes sin procesar ni hilos vivos.</p>
+
+<h2>Aprendizaje sobre concurrencia</h2>
+<ul>
+  <li><b>Lo más difícil fue el cierre, no el caso normal.</b> Terminar hilos bloqueados en esperas distintas (afuera, en la sala, en la barrera, esperando al mozo, en <code>take()</code>) obliga a responder, para cada espera, quién la despierta y cómo se entera el hilo de que tiene que irse. Eso nos llevó a preferir esperas interrumpibles o con timeout (<code>wait(timeout)</code>, <code>tryAcquire(timeout)</code>, <code>await(timeout)</code>) sobre <code>sleep</code> o <code>acquire</code>.</li>
+  <li><b>La herramienta se elige por la forma del problema:</b> una barrera para “esperar a que todos elijan”, un monitor cuando hay varias condiciones sobre el mismo estado, <code>ReentrantLock</code> con <code>Condition</code> cuando la operación no es un simple <i>take</i>, y colas cuando los actores solo necesitan pasarse trabajo.</li>
+  <li><b>Los deadlocks se previenen por diseño</b> más fácilmente que depurándolos: no anidar locks, fijar un orden cuando no se puede evitar la cadena, usar locks hoja y no bloquear nunca reteniendo un lock.</li>
+  <li><b>Las condiciones de carrera se resuelven ubicando la decisión en una sola sección crítica,</b> como la carrera entre tomar el pedido y cerrar la mesa: si ambas operaciones pasan por el mismo monitor, el resultado es siempre coherente.</li>
+  <li><b>La visibilidad no es automática:</b> hay que razonar qué relación <i>happens-before</i> publica cada dato; la inmutabilidad y las colas concurrentes simplifican mucho compartir información entre hilos.</li>
+  <li><b>Un sistema concurrente es no determinista:</b> dos ejecuciones nunca dan el mismo orden, por lo que conviene verificar propiedades (invariantes) en lugar de comparar salidas.</li>
+</ul>
+</section>
+
+</body>
+</html>

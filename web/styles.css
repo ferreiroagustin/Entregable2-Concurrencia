@@ -1,0 +1,307 @@
+/* ------------------------------------------------------------------
+   Tokens de color (claro / oscuro)
+   ------------------------------------------------------------------ */
+:root {
+  --fondo: #f3f1ec;
+  --superficie: #ffffff;
+  --borde: #ddd8cf;
+  --texto: #2b2a28;
+  --tenue: #7a756c;
+  --primario: #c2562d;
+  --piso: #faf7f1;
+  --vereda: #e4e1db;
+  --pared: #8a8175;
+  --zona: #f0ebe1;
+  --cocina: #eef1f3;
+  --caja: #f1eef6;
+  --mesa: #d9b98a;
+  --mesa-borde: #a9824f;
+  --ficha-texto: #ffffff;
+
+  /* Estados de los clientes */
+  --c-afuera: #9b958b;
+  --c-sala: #6b7fa8;
+  --c-eligiendo: #d9a520;
+  --c-mozo: #d9472b;
+  --c-pidiendo: #8e5cc4;
+  --c-comida: #e07b20;
+  --c-comiendo: #3a9a5b;
+  --c-caja: #2a8fa3;
+
+  /* Empleados */
+  --e-mozo: #2b2a28;
+  --e-cocinero: #f4f4f4;
+  --e-cajero: #3c5a99;
+
+  --ok: #3a9a5b;
+  --alerta: #d9a520;
+  --error: #d9472b;
+  --sombra: 0 1px 3px rgba(0, 0, 0, .08);
+}
+
+:root[data-theme="dark"] {
+  --fondo: #17181b;
+  --superficie: #212327;
+  --borde: #33363c;
+  --texto: #e8e6e1;
+  --tenue: #9a968e;
+  --piso: #26282d;
+  --vereda: #1c1d20;
+  --pared: #5d5a55;
+  --zona: #2b2d33;
+  --cocina: #262c31;
+  --caja: #2a2733;
+  --mesa: #7a5f3c;
+  --mesa-borde: #a9824f;
+  --e-mozo: #0f0f10;
+  --e-cocinero: #dcdcdc;
+  --sombra: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #17181b;
+    --superficie: #212327;
+    --borde: #33363c;
+    --texto: #e8e6e1;
+    --tenue: #9a968e;
+    --piso: #26282d;
+    --vereda: #1c1d20;
+    --pared: #5d5a55;
+    --zona: #2b2d33;
+    --cocina: #262c31;
+    --caja: #2a2733;
+    --mesa: #7a5f3c;
+    --mesa-borde: #a9824f;
+    --e-mozo: #0f0f10;
+    --e-cocinero: #dcdcdc;
+    --sombra: 0 1px 3px rgba(0, 0, 0, .4);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Estructura: todo entra en una pantalla, sin scroll
+   ------------------------------------------------------------------ */
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+  flex-wrap: wrap;
+}
+
+.marca { font-weight: 700; font-size: 16px; white-space: nowrap; }
+
+.pill {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--zona);
+  color: var(--tenue);
+}
+.pill[data-estado="ABIERTO"] { background: var(--ok); color: #fff; }
+.pill[data-estado="CERRANDO"] { background: var(--alerta); color: #222; }
+.pill[data-estado="CERRADO"] { background: var(--error); color: #fff; }
+
+.reloj { display: flex; flex-direction: column; gap: 3px; min-width: 120px; font-variant-numeric: tabular-nums; }
+.reloj-barra { height: 4px; background: var(--zona); border-radius: 2px; overflow: hidden; }
+#relojBarra { height: 100%; width: 0; background: var(--primario); transition: width .25s linear; }
+
+.stats { display: flex; gap: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stats b { font-weight: 700; }
+
+.acciones { margin-left: auto; display: flex; gap: 8px; }
+
+.btn {
+  font: inherit;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  color: var(--texto);
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--tenue); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primario { background: var(--primario); border-color: var(--primario); color: #fff; font-weight: 600; }
+.btn.icono { padding: 5px 9px; }
+[hidden] { display: none !important; }
+
+.principal {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 12px;
+  padding: 12px;
+  min-height: 0;
+}
+
+.mapa-caja {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#mapa { flex: 1; width: 100%; min-height: 0; display: block; }
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--tenue);
+  border-top: 1px solid var(--borde);
+}
+.leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+
+.lateral { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+
+.panel {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 10px 12px;
+}
+.panel h2 { font-size: 13px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .05em; color: var(--tenue); }
+.panel-eventos { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.contador { font-weight: 400; }
+
+.personal { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
+.personal li { display: flex; gap: 6px; padding: 2px 0; align-items: baseline; }
+.personal .nombre { font-weight: 600; white-space: nowrap; }
+.personal .que { color: var(--tenue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.personal li.activo .que { color: var(--texto); }
+
+.eventos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 12px;
+}
+.eventos li { padding: 3px 0; border-bottom: 1px dashed var(--borde); display: grid; grid-template-columns: 44px 1fr; gap: 6px; }
+.eventos .t { color: var(--tenue); font-variant-numeric: tabular-nums; }
+.eventos .quien { font-weight: 600; }
+.eventos li[data-tipo="SISTEMA"] { color: var(--primario); font-weight: 600; }
+.eventos li.nuevo { animation: aparecer .5s ease; }
+@keyframes aparecer { from { background: var(--zona); } to { background: transparent; } }
+
+/* ------------------------------------------------------------------
+   Mapa (SVG)
+   ------------------------------------------------------------------ */
+.zona { fill: var(--zona); stroke: var(--borde); }
+.zona-piso { fill: var(--piso); stroke: var(--borde); }
+.zona-vereda { fill: var(--vereda); }
+.zona-cocina { fill: var(--cocina); stroke: var(--borde); }
+.zona-caja { fill: var(--caja); stroke: var(--borde); }
+.pared { stroke: var(--pared); stroke-width: 5; stroke-linecap: round; }
+.puerta { stroke-width: 5; stroke-linecap: round; transition: stroke .4s; }
+.puerta.abierta { stroke: var(--ok); }
+.puerta.cerrada { stroke: var(--error); }
+.rotulo { font-size: 12px; font-weight: 700; fill: var(--tenue); letter-spacing: .08em; }
+.rotulo-chico { font-size: 10px; fill: var(--tenue); }
+
+.mesa { fill: var(--mesa); stroke: var(--mesa-borde); stroke-width: 2; transition: fill .4s, stroke .4s; }
+.mesa[data-estado="ESPERANDO_MOZO"] { stroke: var(--c-mozo); stroke-width: 4; }
+.mesa[data-estado="SUCIA"] { fill: #9c8b74; }
+.mesa[data-estado="LIMPIANDO"] { fill: #a9c7d6; }
+.silla { fill: none; stroke: var(--borde); stroke-width: 1.5; }
+.mesa-nombre { font-size: 13px; font-weight: 700; fill: #3b2a15; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+:root[data-theme="dark"] .mesa-nombre { fill: #f3e6d3; }
+.mesa-estado { font-size: 10.5px; fill: var(--tenue); text-anchor: middle; }
+.plato-emoji { font-size: 15px; text-anchor: middle; dominant-baseline: central; }
+.icono-mesa { font-size: 16px; text-anchor: middle; dominant-baseline: central; }
+
+.hornalla { fill: #3a3d42; stroke: #222; }
+.fuego { font-size: 16px; text-anchor: middle; dominant-baseline: central; }
+.comanda { fill: var(--superficie); stroke: var(--borde); }
+.comanda.lista { stroke: var(--ok); stroke-width: 2.5; }
+.comanda-texto { font-size: 11px; font-weight: 700; fill: var(--texto); }
+.mostrador { fill: var(--pared); opacity: .55; }
+
+.grupo-marco { fill: none; stroke: var(--borde); stroke-dasharray: 4 3; }
+.grupo-marco.completo { stroke: var(--ok); }
+.mas { font-size: 11px; fill: var(--tenue); }
+
+/* Fichas en movimiento */
+.ficha {
+  transition: transform .7s ease-in-out, opacity .6s ease;
+}
+.ficha circle { stroke: rgba(0, 0, 0, .25); stroke-width: 1; transition: fill .35s; }
+.ficha text { font-size: 10px; font-weight: 700; fill: var(--ficha-texto); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.ficha .badge { font-size: 12px; }
+.ficha.saliendo { opacity: 0; }
+.ficha.mozo circle { fill: var(--e-mozo); }
+.ficha.cocinero circle { fill: var(--e-cocinero); }
+.ficha.cocinero text.letra { fill: #222; }
+.ficha.cajero circle { fill: var(--e-cajero); }
+.ficha.inactivo { opacity: .45; }
+
+.cliente[data-estado="ESPERANDO_AFUERA"] circle { fill: var(--c-afuera); }
+.cliente[data-estado="AGRUPANDOSE"] circle,
+.cliente[data-estado="ESPERANDO_MESA"] circle { fill: var(--c-sala); }
+.cliente[data-estado="ELIGIENDO"] circle,
+.cliente[data-estado="ESPERANDO_COMPANEROS"] circle { fill: var(--c-eligiendo); }
+.cliente[data-estado="ESPERANDO_MOZO"] circle { fill: var(--c-mozo); }
+.cliente[data-estado="PIDIENDO"] circle { fill: var(--c-pidiendo); }
+.cliente[data-estado="ESPERANDO_COMIDA"] circle { fill: var(--c-comida); }
+.cliente[data-estado="COMIENDO"] circle { fill: var(--c-comiendo); }
+.cliente[data-estado="EN_COLA_CAJA"] circle,
+.cliente[data-estado="PAGANDO"] circle { fill: var(--c-caja); }
+
+/* ------------------------------------------------------------------
+   Modal de resumen
+   ------------------------------------------------------------------ */
+.modal { position: fixed; inset: 0; display: grid; place-items: center; z-index: 10; }
+.modal-fondo { position: absolute; inset: 0; background: rgba(0, 0, 0, .45); }
+.modal-caja {
+  position: relative;
+  background: var(--superficie);
+  border-radius: 14px;
+  padding: 18px 22px;
+  width: min(420px, calc(100vw - 32px));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .3);
+}
+.modal-caja h2 { margin: 0 0 10px; font-size: 18px; }
+.resumen { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin: 0 0 12px; }
+.resumen dt { color: var(--tenue); }
+.resumen dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.invariantes { font-size: 12px; margin: 0 0 14px; }
+.invariantes summary { cursor: pointer; font-weight: 600; }
+.invariantes ul { padding-left: 18px; margin: 6px 0 0; }
+.log-ruta { font-size: 11.5px; color: var(--tenue); word-break: break-all; margin: 0 0 14px; }
+
+/* ------------------------------------------------------------------
+   Pantallas angostas: se apilan mapa y panel (ahí sí hay scroll)
+   ------------------------------------------------------------------ */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .principal { grid-template-columns: 1fr; }
+  .mapa-caja { min-height: 60vh; }
+  .lateral { min-height: 420px; }
+  .stats { order: 5; width: 100%; }
+}

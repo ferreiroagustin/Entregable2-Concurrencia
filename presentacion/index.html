@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restaurante concurrente</title>
+<meta name="description" content="Presentación del Entregable 2 de Programación Avanzada 2026: simulador concurrente de restaurante en Java.">
+<link rel="stylesheet" href="presentacion.css">
+</head>
+<body>
+
+<div class="viewport">
+<div class="deck">
+
+<!-- ===================================================================== 1 -->
+<section class="slide portada" data-titulo="Portada">
+  <div class="izq">
+    <p class="kicker rev">Programación Avanzada 2026 · Entregable 2</p>
+    <h1 class="rev">Restaurante<br><em>concurrente</em></h1>
+    <p class="lead rev">Un simulador en Java donde cada persona es un hilo, con el mapa del local en vivo.</p>
+    <dl class="meta rev">
+      <dt>Integrantes</dt><dd>Ferreiro · Bruschera</dd>
+    </dl>
+  </div>
+  <div class="der">
+    <div class="shot rev" style="--i:2"><img src="img/vista-general.png" alt="Mapa del restaurante en vivo"></div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Presentarnos. Vamos a mostrar qué diseñamos y, sobre todo, cómo aplicamos cada herramienta de concurrencia.</li>
+    <li>No repetimos la consigna: vamos directo a las decisiones.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 2 -->
+<section class="slide" data-titulo="Qué diseñamos">
+  <p class="kicker rev">Introducción</p>
+  <h2 class="rev">Qué diseñamos</h2>
+  <div class="cols c2-r">
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev">Cada <b>cliente, mozo, cocinero y cajero es un hilo</b>: un <span class="k">Runnable</span> que corre en un pool de <span class="k">Executors</span>.</li>
+        <li class="rev">Se coordinan con <b>recursos compartidos</b> (monitores, locks, semáforo, barreras) y <b>colas de mensajes</b>.</li>
+        <li class="rev">A los T ms el local <b>cierra en orden</b>: nadie queda colgado y no queda ningún hilo vivo.</li>
+        <li class="rev">Cada cambio genera una foto inmutable del estado, que va al <b>log</b>, a la <b>consola</b> y al <b>mapa web en vivo</b> (SSE).</li>
+      </ul>
+      <div class="big rev">
+        <div><b>4</b><span>roles concurrentes</span></div>
+        <div><b>7</b><span>pools de hilos</span></div>
+        <div><b>10</b><span>invariantes verificados</span></div>
+      </div>
+    </div>
+    <div class="shot rev" style="align-self:center"><img src="img/vista-general.png" alt="Vista general de la simulación: afuera, sala, salón, cocina y caja">
+      <span class="cap">Simulación real · T = 0:26 · 8/8 adentro, 20 esperando afuera</span></div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Recorrer el mapa: afuera (fila de la puerta), sala de espera (grupos de a P), salón con M mesas, mozos, cocina con comandas y caja.</li>
+    <li>Cada ficha es un hilo real; el mapa se dibuja con los snapshots que manda el Display.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 3 -->
+<section class="slide" data-titulo="Arquitectura">
+  <p class="kicker rev">Arquitectura</p>
+  <h2 class="rev">Actores = hilos · recursos compartidos · mensajes</h2>
+  <div class="rev" style="flex:1;display:flex;align-items:center">
+  <svg class="diag" viewBox="0 0 1760 700" role="img" aria-label="Flujo de mensajes entre los actores y los recursos">
+    <defs>
+      <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker>
+      <marker id="flA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2562d"/></marker>
+    </defs>
+    <!-- aristas -->
+    <path id="a1" class="e" d="M270,88 L348,88" marker-end="url(#fl)" data-flujo="#355f9c,1.6,1"/>
+    <path id="a2" class="e" d="M610,88 L688,88" marker-end="url(#fl)" data-flujo="#355f9c,1.6,1"/>
+    <path id="a3" class="e" d="M970,88 L1048,88" marker-end="url(#fl)" data-flujo="#355f9c,1.6,1"/>
+    <path id="a4" class="e acc" d="M1215,136 L1215,238" marker-end="url(#flA)" data-flujo="#b97c0c,2,2"/>
+    <path id="a5" class="e" d="M1380,288 L1458,288" marker-end="url(#fl)" data-flujo="#b97c0c,1.6,1"/>
+    <path id="a6" class="e" d="M1595,336 L1595,428" marker-end="url(#fl)" data-flujo="#c2562d,1.8,1"/>
+    <path id="a7" class="e" d="M1460,478 L1382,478" marker-end="url(#fl)" data-flujo="#c2562d,1.6,1"/>
+    <path id="a8" class="e acc" d="M1215,430 L1215,338" marker-end="url(#flA)" data-flujo="#c2562d,2,1"/>
+    <path id="a9" class="e dash" d="M1595,240 C1595,150 1500,100 1382,96" marker-end="url(#fl)" data-flujo="#b97c0c,2.4,1"/>
+    <path id="a10" class="e" d="M1050,124 C860,210 640,320 520,428" marker-end="url(#fl)" data-flujo="#2c7a4b,2.6,2"/>
+    <path id="a11" class="e" d="M350,478 L272,478" marker-end="url(#fl)" data-flujo="#2c7a4b,1.6,1"/>
+    <path id="a12" class="e dash" d="M150,430 L150,138" marker-end="url(#fl)" data-flujo="#2c7a4b,2.2,1"/>
+    <path id="a13" class="e" d="M270,640 L348,640" marker-end="url(#fl)" data-flujo="#7a4fa3,1.2,2"/>
+    <path id="a14" class="e" d="M680,640 L758,640" marker-end="url(#fl)" data-flujo="#7a4fa3,1.2,2"/>
+    <path id="a15" class="e" d="M1120,640 L1198,640" marker-end="url(#fl)" data-flujo="#7a4fa3,1.2,2"/>
+    <path id="a16" class="e" d="M1430,640 L1498,640" marker-end="url(#fl)" data-flujo="#7a4fa3,1.2,2"/>
+    <line x1="20" y1="566" x2="1740" y2="566" stroke="#d8c8b2" stroke-width="2" stroke-dasharray="4 8"/>
+    <!-- etiquetas -->
+    <text class="lbl acc" x="1230" y="180">TOMAR_PEDIDO (acción de barrera)</text>
+    <text class="lbl" x="1230" y="206">LIMPIAR (último que se va)</text>
+    <text class="lbl" x="1419" y="276" text-anchor="middle">take()</text>
+    <text class="lbl" x="1583" y="390" text-anchor="end">recibirPedido()</text>
+    <text class="lbl" x="1421" y="556" text-anchor="middle">tomarPlato()</text>
+    <text class="lbl acc" x="1230" y="392">SERVIR</text>
+    <text class="lbl" x="1612" y="150">servir / limpiar</text>
+    <text class="lbl" x="770" y="300">pagar()</text>
+    <text class="lbl" x="311" y="466" text-anchor="middle">take()</text>
+    <text class="lbl" x="165" y="280">complete(ticket)</text>
+    <text class="lbl" x="165" y="304">CompletableFuture</text>
+    <text class="lbl" x="1159" y="628" text-anchor="middle">take()</text>
+    <text class="lbl" x="30" y="560">VISUALIZACIÓN</text>
+    <!-- nodos -->
+    <g class="n actor"><rect x="30" y="40" width="240" height="96" rx="14"/><text class="t1" x="150" y="82" text-anchor="middle">Cliente ×N</text><text class="s" x="150" y="114" text-anchor="middle">pool cached</text></g>
+    <g class="n lock"><rect x="350" y="40" width="260" height="96" rx="14"/><text class="t1" x="480" y="82" text-anchor="middle">Puerta</text><text class="s" x="480" y="114" text-anchor="middle">Semaphore(P·M)</text></g>
+    <g class="n rec"><rect x="690" y="40" width="280" height="96" rx="14"/><text class="t1" x="830" y="82" text-anchor="middle">SalaDeEspera</text><text class="s" x="830" y="114" text-anchor="middle">monitor</text></g>
+    <g class="n rec"><rect x="1050" y="40" width="330" height="96" rx="14"/><text class="t1" x="1215" y="82" text-anchor="middle">Mesa ×M</text><text class="s" x="1215" y="114" text-anchor="middle">monitor + CyclicBarrier</text></g>
+    <g class="n cola"><rect x="1050" y="240" width="330" height="96" rx="14"/><text class="t1" x="1215" y="282" text-anchor="middle">ColaMozos</text><text class="s" x="1215" y="314" text-anchor="middle">PriorityBlockingQueue</text></g>
+    <g class="n actor"><rect x="1460" y="240" width="270" height="96" rx="14"/><text class="t1" x="1595" y="282" text-anchor="middle">Mozo ×Z</text><text class="s" x="1595" y="314" text-anchor="middle">pool fijo</text></g>
+    <g class="n lock"><rect x="1460" y="430" width="270" height="96" rx="14"/><text class="t1" x="1595" y="472" text-anchor="middle">Cocina</text><text class="s" x="1595" y="504" text-anchor="middle">Lock + Condition</text></g>
+    <g class="n actor"><rect x="1050" y="430" width="330" height="96" rx="14"/><text class="t1" x="1215" y="472" text-anchor="middle">Cocinero ×C</text><text class="s" x="1215" y="504" text-anchor="middle">pool fijo</text></g>
+    <g class="n cola"><rect x="350" y="430" width="300" height="96" rx="14"/><text class="t1" x="500" y="472" text-anchor="middle">Caja</text><text class="s" x="500" y="504" text-anchor="middle">LinkedBlockingQueue</text></g>
+    <g class="n actor"><rect x="30" y="430" width="240" height="96" rx="14"/><text class="t1" x="150" y="472" text-anchor="middle">Cajero ×Y</text><text class="s" x="150" y="504" text-anchor="middle">pool fijo</text></g>
+    <g class="n"><rect x="30" y="600" width="240" height="80" rx="14"/><text class="t1" x="150" y="637" text-anchor="middle" style="font-size:23px">Todos los actores</text><text class="s" x="150" y="664" text-anchor="middle">notificar()</text></g>
+    <g class="n lock"><rect x="350" y="600" width="330" height="80" rx="14"/><text class="t1" x="515" y="637" text-anchor="middle" style="font-size:24px">EstadoRestaurante</text><text class="s" x="515" y="664" text-anchor="middle">ReentrantReadWriteLock</text></g>
+    <g class="n cola"><rect x="760" y="600" width="360" height="80" rx="14"/><text class="t1" x="940" y="637" text-anchor="middle" style="font-size:24px">colaEventos</text><text class="s" x="940" y="664" text-anchor="middle">LinkedBlockingQueue</text></g>
+    <g class="n actor"><rect x="1200" y="600" width="230" height="80" rx="14"/><text class="t1" x="1315" y="637" text-anchor="middle" style="font-size:24px">Display</text><text class="s" x="1315" y="664" text-anchor="middle">1 hilo</text></g>
+    <g class="n"><rect x="1500" y="600" width="230" height="80" rx="14"/><text class="t1" x="1615" y="637" text-anchor="middle" style="font-size:22px">consola · log</text><text class="s" x="1615" y="664" text-anchor="middle">SSE → navegador</text></g>
+    <g class="capa-puntos"></g>
+  </svg>
+  </div>
+  <div class="chips rev" style="margin-top:10px">
+    <span class="chip"><svg width="22" height="22"><rect width="22" height="22" rx="5" fill="#3a2b21"/></svg> hilo (actor)</span>
+    <span class="chip"><svg width="22" height="22"><rect width="22" height="22" rx="5" fill="#dde6f3" stroke="#355f9c" stroke-width="3"/></svg> monitor</span>
+    <span class="chip"><svg width="22" height="22"><rect width="22" height="22" rx="5" fill="#fff" stroke="#261b14" stroke-width="3"/></svg> lock / semáforo</span>
+    <span class="chip"><svg width="22" height="22"><rect width="22" height="22" rx="5" fill="#f6e6c4" stroke="#b97c0c" stroke-width="3"/></svg> cola bloqueante</span>
+  </div>
+  <aside class="notes"><ul>
+    <li>Arriba, el recorrido del cliente: puerta (semáforo), sala (monitor), mesa (monitor + barrera).</li>
+    <li>Al medio, el circuito de trabajo: la barrera encola TOMAR_PEDIDO, el mozo lleva el pedido a la cocina, el cocinero que completa el pedido encola SERVIR.</li>
+    <li>A la izquierda, el pago: cola única de caja y un CompletableFuture que el cajero completa.</li>
+    <li>Abajo, la visualización: todos notifican a EstadoRestaurante, que encola eventos para el único hilo Display.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 4 -->
+<section class="slide" data-titulo="Monitores con synchronized">
+  <p class="kicker rev">Exclusión mutua · 1</p>
+  <h2 class="rev"><span class="k" style="font-size:.9em">synchronized</span> + monitores <span class="sub">Mesa · SalaDeEspera</span></h2>
+  <div class="cols c2">
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev"><span class="cls">Mesa</span>: estado + condiciones (<span class="k">pedidoTomado</span>, <span class="k">servida</span>, <span class="k">cancelada</span>) bajo el lock intrínseco.
+          <span class="why">Clientes, mozos y el coordinador las leen y modifican.</span></li>
+        <li class="rev"><span class="cls">SalaDeEspera</span>: arma grupos de a P en FIFO y tiene su propia lista de mesas libres.</li>
+        <li class="rev"><b>Un lock por recurso</b>, no uno global. Un lock global sería correcto, pero serializa a todos los actores.</li>
+        <li class="rev">Nadie toca ese estado desde afuera: <b>patrón Monitor</b>.</li>
+      </ul>
+      <pre class="code xs rev" data-src="Mesa.java">public synchronized void servir(int mozoId) {
+    servida = true;
+    estadoMesa = EstadoMesa.COMIENDO;
+    estado.notificar(/* … */);
+    ⟦notifyAll();⟧   // despierta a los que esperan la comida
+}</pre>
+    </div>
+    <div class="stack">
+      <div class="shot crop rev" style="--x:140;--y:100;--z:1.1;width:770px;height:400px">
+        <img src="img/sala-grupo-completo.png" alt="Sala de espera con un grupo completo esperando mesa">
+        <span class="cap">Grupo 5 [9, 11] completo espera mesa · la mesa 1 se está limpiando</span>
+      </div>
+      <div class="callout rev">El grupo recién consigue mesa cuando un mozo termina de limpiar y llama a <span class="k">sala().mesaLiberada(mesa)</span>, <b>después</b> de salir del monitor de la mesa.</div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Elegimos monitor para Mesa porque tiene varias condiciones sobre el mismo estado y varios tipos de hilos que esperan.</li>
+    <li>La sala no toca el monitor de las mesas: tiene su propia lista. Eso evita locks anidados (lo retomamos en deadlocks).</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 5 -->
+<section class="slide" data-titulo="wait / notifyAll">
+  <p class="kicker rev">Sincronización por condición</p>
+  <h2 class="rev"><span class="k" style="font-size:.9em">wait()</span> / <span class="k" style="font-size:.9em">notifyAll()</span>: siempre dentro de un <span class="k" style="font-size:.9em">while</span></h2>
+  <div class="cols c2-l">
+    <div class="stack">
+      <pre class="code xs rev" data-src="Mesa.esperarMozo">public synchronized boolean esperarMozo() throws InterruptedException {
+    ⟦while (!pedidoTomado &amp;&amp; !cancelada)⟧ {
+        wait();          // suelta el monitor mientras espera
+    }
+    return pedidoTomado;
+}</pre>
+      <table class="t sm rev">
+        <tr><th>Quién espera</th><th>Condición</th><th>Quién notifica</th></tr>
+        <tr><td><span class="k">Mesa.esperarMozo</span></td><td>pedido tomado o cancelado</td><td><span class="k">tomarPedido</span>, <span class="k">cerrar</span></td></tr>
+        <tr><td><span class="k">Mesa.esperarComida</span></td><td>servida</td><td><span class="k">servir</span></td></tr>
+        <tr><td><span class="k">SalaDeEspera.esperarMesa</span></td><td>el grupo tiene mesa o se cerró</td><td><span class="k">ingresar</span>, <span class="k">mesaLiberada</span>, <span class="k">cerrar</span></td></tr>
+      </table>
+    </div>
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev"><b>¿Por qué <span class="k">while</span>?</b> Hay despertares espurios y notificaciones que no son para ese hilo: al despertar hay que volver a evaluar la condición.</li>
+        <li class="rev"><b>¿Por qué <span class="k">notifyAll</span>?</b> En la misma mesa esperan hilos por condiciones distintas (mozo, comida, cierre). Con <span class="k">notify</span> se podría despertar al hilo equivocado.</li>
+        <li class="rev"><b>Elegir el menú</b> usa <span class="k">wait(timeout)</span> en lugar de <span class="k">sleep</span>: el <span class="k">notifyAll</span> de <span class="k">cerrar()</span> lo corta enseguida.</li>
+      </ul>
+      <pre class="code xs rev" data-src="Mesa.elegir">while (!cancelada
+        &amp;&amp; (resta = limite - System.nanoTime()) > 0) {
+    TimeUnit.NANOSECONDS.timedWait(this, resta);
+}</pre>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>El wait libera el monitor: por eso el mozo puede entrar a tomarPedido mientras los clientes esperan.</li>
+    <li>Un sleep no se puede despertar sin interrumpir el hilo; el wait con timeout sí, con el notifyAll del cierre.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 6 -->
+<section class="slide" data-titulo="ReentrantLock + Condition">
+  <p class="kicker rev">Exclusión mutua · 2</p>
+  <h2 class="rev"><span class="k" style="font-size:.9em">ReentrantLock</span> + <span class="k" style="font-size:.9em">Condition</span> <span class="sub">Cocina</span></h2>
+  <div class="cols c2-l">
+    <div class="stack">
+      <pre class="code sm rev" data-src="Cocina.tomarPlato">lock.lock();
+try {
+    while (true) {
+        Plato plato = ⟦primerPlatoPendiente()⟧;
+        if (plato != null) {
+            plato.empezarACocinar(cocineroId);   /* … */
+            return plato;
+        }
+        if (cerrada) return null;
+        ⟦hayPlatos.await();⟧
+    }
+} finally { lock.unlock(); }</pre>
+      <ul class="b xs">
+        <li class="rev">El cocinero no “saca el primero”: toma un plato <b>PENDIENTE</b> del primer pedido que tenga uno, <b>sin sacar el pedido</b>. Buscar y marcar es atómico; una <span class="k">BlockingQueue</span> no alcanza.</li>
+        <li class="rev"><b>Varios cocineros reparten el mismo pedido.</b></li>
+        <li class="rev"><span class="k">ReentrantLock(true)</span> justo · <span class="k">signalAll()</span> en <span class="k">recibirPedido</span> y <span class="k">cerrar</span> · <span class="k">unlock()</span> en <span class="k">finally</span>.</li>
+      </ul>
+    </div>
+    <div class="shot crop rev" style="--x:845;--y:60;--z:1.15;width:673px;height:690px;align-self:start">
+      <img src="img/sala-y-cocina-mismo-pedido.png" alt="Dos cocineros cocinando platos del mismo pedido">
+      <span class="ring" style="left:9px;top:59px;width:300px;height:125px"></span>
+      <span class="cap">C1 y C2 cocinan Milanesa del mismo pedido #12 (mesa 4)</span>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Mostrar en la captura: los dos cocineros con el mismo pedido #12 y la comanda M4 con dos puntos naranjas.</li>
+    <li>La Condition con nombre (hayPlatos) es más clara que un wait genérico, y el await también va en un bucle.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 7 -->
+<section class="slide" data-titulo="ReentrantReadWriteLock">
+  <p class="kicker rev">Exclusión mutua · 3</p>
+  <h2 class="rev"><span class="k" style="font-size:.9em">ReentrantReadWriteLock</span> <span class="sub">EstadoRestaurante</span></h2>
+  <div class="cols c2-l">
+    <div class="stack">
+      <pre class="code xs rev" data-src="EstadoRestaurante.notificar">lock.writeLock().lock();
+try {
+    if (cambio != null) cambio.aplicar(vista);           // 1
+    long seq = ++secuencia;
+    long t = tiempoMs();
+    Snapshot foto = vista.foto(seq, t, tiempoTotalMs);     // 2
+    colaEventos.add(new Evento(seq, t, actor, descripcion, foto)); // 3
+} finally { lock.writeLock().unlock(); }</pre>
+      <div class="callout rev">Los tres pasos (1 aplicar el cambio · 2 sacar la foto · 3 encolar el evento) son <b>atómicos</b>: el orden de la cola es igual al orden real de los cambios, y cada evento lleva el estado del momento exacto en que se produjo.</div>
+    </div>
+    <div class="stack">
+      <svg class="diag rev" viewBox="0 0 640 360" role="img" aria-label="Escritores y lectores del estado">
+        <g class="n actor"><rect x="0" y="20" width="230" height="80" rx="12"/><text class="t1" x="115" y="57" text-anchor="middle" style="font-size:23px">Todos los actores</text><text class="s" x="115" y="84" text-anchor="middle">notificar()</text></g>
+        <g class="n"><rect x="0" y="240" width="230" height="96" rx="12"/><text class="t1" x="115" y="278" text-anchor="middle" style="font-size:22px">Servidor web</text><text class="s" x="115" y="306" text-anchor="middle">/estado</text><text class="s" x="115" y="328" text-anchor="middle">+ invariantes</text></g>
+        <g class="n hoja"><rect x="370" y="120" width="260" height="120" rx="14"/><text class="t1" x="500" y="168" text-anchor="middle" style="font-size:24px">Vista</text><text class="s" x="500" y="198" text-anchor="middle">privada</text><text class="s" x="500" y="222" text-anchor="middle">solo con el lock</text></g>
+        <path id="rw1" class="e acc" d="M230,60 C300,60 310,150 368,160" marker-end="url(#flA)" data-flujo="#c2562d,1.4,3"/>
+        <path id="rw2" class="e" d="M370,205 C310,215 300,288 232,288" marker-end="url(#fl)" data-flujo="#355f9c,2,2"/>
+        <text class="lbl acc" x="280" y="40">writeLock: exclusivo</text>
+        <text class="lbl" x="268" y="330">readLock: compartido</text>
+      </svg>
+      <ul class="b sm">
+        <li class="rev"><b>Muchos escritores</b> (cada cambio de cada actor) y <b>lectores esporádicos</b> (<span class="k">snapshotActual()</span>).</li>
+        <li class="rev">Varios lectores leen a la vez sin bloquearse entre ellos.</li>
+        <li class="rev">Es un <b>lock hoja</b>: con él tomado no se toma ningún otro lock.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Este es el único punto de notificación del sistema: por eso el Display puede garantizar el orden.</li>
+    <li>El número de secuencia se asigna bajo el write lock, en el mismo paso en que se encola.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 8 -->
+<section class="slide" data-titulo="Semaphore y clases atómicas">
+  <p class="kicker rev">Exclusión mutua · 4 y 5</p>
+  <h2 class="rev"><span class="k" style="font-size:.9em">Semaphore</span> de la puerta · clases atómicas</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <h3 class="rev">La puerta: <span class="k">new Semaphore(P·M, true)</span></h3>
+      <pre class="code sm rev" data-src="Restaurante.esperarParaEntrar">while (abierto.get()) {
+    if (puerta.⟦tryAcquire⟧(Config.ESPERA_PUERTA_MS,
+                          TimeUnit.MILLISECONDS)) {
+        return true;
+    }
+}
+return false;   // cerraron mientras esperaba afuera</pre>
+      <ul class="b sm">
+        <li class="rev">Hay P·M permisos: los demás esperan afuera. Es <b>justo</b>.</li>
+        <li class="rev"><span class="k">tryAcquire</span> con timeout (100 ms) en lugar de <span class="k">acquire()</span>: el cliente <b>se entera del cierre</b> y se va.</li>
+        <li class="rev"><span class="k">release()</span> en el <span class="k">finally</span> de <span class="k">Cliente.run</span>: el permiso siempre vuelve.</li>
+      </ul>
+    </div>
+    <div class="stack">
+      <h3 class="rev">Atómicos: CAS, sin locks y visibles</h3>
+      <table class="t sm rev">
+        <tr><th>Dónde</th><th>Para qué</th></tr>
+        <tr><td><span class="k">Restaurante.abierto</span><br><span class="muted">AtomicBoolean</span></td><td><span class="k">compareAndSet(true, false)</span>: el cierre se anuncia <b>una sola vez</b></td></tr>
+        <tr><td><span class="k">Pedido.platosPendientes</span><br><span class="muted">AtomicInteger</span></td><td><span class="k">decrementAndGet() == 0</span>: solo el cocinero del último plato avisa al mozo</td></tr>
+        <tr><td><span class="k">Contadores</span><br><span class="muted">AtomicInteger</span></td><td>generados, entraron, pagaron… para los invariantes</td></tr>
+        <tr><td><span class="k">Caja.recaudacion</span> · <span class="k">ColaMozos.secuencia</span><br><span class="muted">AtomicLong</span></td><td>recaudación · orden FIFO a igual prioridad</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Consecuencia aceptada: al vencer el timeout, el cliente vuelve a la fila del semáforo, así que el orden de los de afuera es aproximadamente FIFO.</li>
+    <li>Si consigue permiso justo cuando cierran, SalaDeEspera.ingresar lo rechaza dentro del monitor y el cliente devuelve el permiso.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 9 -->
+<section class="slide" data-titulo="Barreras">
+  <p class="kicker rev">Sincronización</p>
+  <h2 class="rev">Barreras: <span class="k" style="font-size:.9em">CyclicBarrier</span> y <span class="k" style="font-size:.9em">CountDownLatch</span></h2>
+  <div class="cols" style="grid-template-columns:1.2fr .8fr">
+    <div class="stack">
+      <pre class="code sm rev" data-src="Mesa.java">this.barrera = new CyclicBarrier(capacidad, ⟦this::llamarMozo⟧);
+private synchronized void llamarMozo() {   // la ejecuta el último
+    if (cancelada) return;
+    estadoMesa = EstadoMesa.ESPERANDO_MOZO;
+    colaMozos.encolar(TipoTarea.TOMAR_PEDIDO, this, /* … */);
+}</pre>
+      <ul class="b xs">
+        <li class="rev"><b>Una barrera de P partes por mesa.</b> Nadie llama al mozo hasta que eligieron los P; la <b>acción de barrera</b> lo llama una sola vez.</li>
+        <li class="rev"><b>Cíclica:</b> se reutiliza con cada grupo que ocupa la mesa. Si se rompe, se cancela la ocupación y se hace <span class="k">reset()</span> al limpiar.</li>
+        <li class="rev"><span class="k">esperarCompaneros()</span> <b>no</b> es <span class="k">synchronized</span>: si lo fuera, el primero esperaría en la barrera con el monitor tomado y los demás no podrían llegar a ella.</li>
+      </ul>
+      <div class="cols c2 rev" style="gap:20px;flex:none">
+        <div class="card" style="padding:20px 26px"><h3 style="font-size:26px"><span class="k">senalCierre</span> (1)</h3><p style="font-size:22px">El temporizador hace <span class="k">countDown</span> en T. El coordinador espera con <span class="k">await()</span>; el <span class="k">GeneradorClientes</span>, con <span class="k">await(tp)</span> en vez de <span class="k">sleep</span>.</p></div>
+        <div class="card" style="padding:20px 26px"><h3 style="font-size:26px"><span class="k">empleadosTerminados</span> (Z+C+Y)</h3><p style="font-size:22px">Cada empleado hace <span class="k">countDown</span> en su <span class="k">finally</span>. El coordinador sabe cuándo terminaron todos.</p></div>
+      </div>
+    </div>
+    <div class="shot crop rev" style="--x:365;--y:170;--z:1.2;width:570px;height:624px;align-self:start">
+      <img src="img/barrera-mozo-tomando-pedido.png" alt="Mesas en distintas fases: eligiendo, mozo tomando el pedido, esperando comida">
+      <span class="ring" style="left:340px;top:30px;width:225px;height:235px"></span>
+      <span class="cap">“Todos eligieron: la mesa 2 llama a un mozo” → Z1 va a tomar el pedido</span>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Es exactamente la regla: luego de que los P eligen, llaman al mozo. Por eso preferimos CyclicBarrier a Phaser: P es fijo.</li>
+    <li>En el cierre, los cancelados también atraviesan la barrera, así que nunca queda un await colgado.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 10 -->
+<section class="slide" data-titulo="Pasaje de mensajes">
+  <p class="kicker rev">Comunicación entre hilos</p>
+  <h2 class="rev">Pasaje de mensajes con <span class="k" style="font-size:.9em">BlockingQueue</span></h2>
+  <div class="cols c2-l">
+    <div class="stack">
+      <div class="card acc rev">
+        <h3><span class="cls">ColaMozos</span> · <span class="k">PriorityBlockingQueue&lt;TareaMozo&gt;</span></h3>
+        <div class="chips" style="margin:8px 0 14px">
+          <span class="chip"><span class="badge">0</span> SERVIR</span>
+          <span class="chip"><span class="badge y">1</span> TOMAR_PEDIDO</span>
+          <span class="chip"><span class="badge b">2</span> LIMPIAR</span>
+          <span class="chip"><span class="badge g">3</span> FIN</span>
+        </div>
+        <p style="font-size:24px;line-height:1.4">La comida lista se enfría; tomar pedidos alimenta la cocina; limpiar puede esperar. A igual prioridad, FIFO por <span class="k">secuencia</span>, así que la inanición queda acotada.</p>
+      </div>
+      <pre class="code sm rev" data-src="TareaMozo.compareTo">int porPrioridad = Integer.compare(tipo.prioridad(),
+                                   otra.tipo.prioridad());
+return porPrioridad != 0 ? porPrioridad
+                         : Long.compare(secuencia, otra.secuencia);</pre>
+      <div class="cols c2 rev" style="gap:20px;flex:none">
+        <div class="card"><h3 style="font-size:26px"><span class="cls">Caja</span> · <span class="k">LinkedBlockingQueue&lt;Pago&gt;</span></h3><p style="font-size:23px">Fila <b>única</b>: el primer cajero libre atiende al primero de la cola.</p></div>
+        <div class="card"><h3 style="font-size:26px"><span class="k">colaEventos</span> · <span class="k">LinkedBlockingQueue&lt;Evento&gt;</span></h3><p style="font-size:23px">Un solo consumidor (el Display), así que se procesa en orden.</p></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="shot crop rev" style="--x:815;--y:478;--z:1.75;width:560px;height:480px">
+        <img src="img/caja-cola-pago.png" alt="Caja con clientes en la cola de pago">
+        <span class="cap">Y1 cobra · los clientes 7 y 8 en la cola de pago</span>
+      </div>
+      <div class="callout green rev">Todas son <b>ilimitadas</b>: <span class="k">put</span>/<span class="k">add</span> nunca bloquea. <span class="k">take()</span> deja al consumidor dormido, sin espera activa.</div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Pasaje de mensajes: no se comparte estado mutable; los mensajes (TareaMozo, Pago, Evento) son inmutables.</li>
+    <li>Que sean ilimitadas es clave para no tener deadlocks: se puede encolar con el monitor de una mesa tomado.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 11 -->
+<section class="slide" data-titulo="Productor-Consumidor">
+  <p class="kicker rev">Patrón principal</p>
+  <h2 class="rev">Productor-Consumidor</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <svg class="diag rev" viewBox="0 0 900 420" role="img" aria-label="Productores, cola de prioridad y mozos consumidores">
+        <defs><marker id="fl2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker></defs>
+        <path id="pc1" class="e" d="M240,70 C290,70 290,185 328,185" marker-end="url(#fl2)" data-flujo="#b97c0c,1.8,2"/>
+        <path id="pc2" class="e" d="M240,210 L328,210" marker-end="url(#fl2)" data-flujo="#c2562d,1.5,2"/>
+        <path id="pc3" class="e" d="M240,350 C290,350 290,235 328,235" marker-end="url(#fl2)" data-flujo="#355f9c,2.2,1"/>
+        <path id="pc4" class="e" d="M590,190 C630,190 640,120 678,120" marker-end="url(#fl2)" data-flujo="#c2562d,1.7,2"/>
+        <path id="pc5" class="e" d="M590,230 C630,230 640,300 678,300" marker-end="url(#fl2)" data-flujo="#b97c0c,1.9,2"/>
+        <g class="n"><rect x="20" y="30" width="220" height="80" rx="12"/><text class="t1" x="130" y="66" text-anchor="middle" style="font-size:24px">Mesas</text><text class="s" x="130" y="92" text-anchor="middle">TOMAR_PEDIDO</text></g>
+        <g class="n"><rect x="20" y="170" width="220" height="80" rx="12"/><text class="t1" x="130" y="206" text-anchor="middle" style="font-size:24px">Cocineros</text><text class="s" x="130" y="232" text-anchor="middle">SERVIR</text></g>
+        <g class="n"><rect x="20" y="310" width="220" height="80" rx="12"/><text class="t1" x="130" y="346" text-anchor="middle" style="font-size:24px">Clientes</text><text class="s" x="130" y="372" text-anchor="middle">LIMPIAR</text></g>
+        <g class="n cola"><rect x="330" y="140" width="260" height="140" rx="14"/><text class="t1" x="460" y="196" text-anchor="middle" style="font-size:25px">ColaMozos</text><text class="s" x="460" y="226" text-anchor="middle">PriorityBlocking</text><text class="s" x="460" y="250" text-anchor="middle">Queue</text></g>
+        <g class="n actor"><rect x="680" y="80" width="200" height="80" rx="12"/><text class="t1" x="780" y="128" text-anchor="middle" style="font-size:24px">Mozo 1</text></g>
+        <g class="n actor"><rect x="680" y="260" width="200" height="80" rx="12"/><text class="t1" x="780" y="308" text-anchor="middle" style="font-size:24px">Mozo 2</text></g>
+        <text class="lbl" x="352" y="128">put()</text>
+        <text class="lbl" x="635" y="214" text-anchor="middle">take()</text>
+        <g class="capa-puntos"></g>
+      </svg>
+      <table class="t sm rev">
+        <tr><th>Productores</th><th>Búfer</th><th>Consumidores</th></tr>
+        <tr><td>Mesas · cocineros · clientes</td><td><span class="k">ColaMozos</span></td><td>Z mozos</td></tr>
+        <tr><td>Clientes</td><td><span class="k">Caja</span></td><td>Y cajeros</td></tr>
+        <tr><td>Mozos</td><td><span class="k">Cocina</span> (lock + Condition)</td><td>C cocineros</td></tr>
+        <tr><td>Todos los actores</td><td><span class="k">colaEventos</span></td><td>1 Display</td></tr>
+      </table>
+    </div>
+    <div class="stack">
+      <h3 class="rev">Por qué es el patrón principal</h3>
+      <ul class="b sm">
+        <li class="rev"><b>Desacopla:</b> el productor no sabe quién atiende. Los mozos no tienen mesas asignadas.</li>
+        <li class="rev"><b>Sin espera activa:</b> <span class="k">take()</span> bloquea sin gastar CPU (“si no hay nada que hacer, esperan”).</li>
+        <li class="rev"><b>Balancea:</b> Y cajeros sobre una sola fila.</li>
+        <li class="rev"><b>Ordena:</b> un consumidor sobre una cola FIFO, así que el Display respeta el orden real.</li>
+        <li class="rev"><b>Cierre limpio:</b> una <i>poison pill</i> al final de la cola.</li>
+        <li class="rev"><b>Sin deadlocks:</b> producir nunca bloquea.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Aparece en cuatro lugares; en la cocina el búfer es una lista con lock + Condition (variante de la cátedra: buffer con exclusión mutua + espera por condición).</li>
+    <li>Los puntos de colores son las prioridades: rojo SERVIR, amarillo TOMAR_PEDIDO, azul LIMPIAR.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 12 -->
+<section class="slide" data-titulo="Pools de hilos">
+  <p class="kicker rev">Working Threads</p>
+  <h2 class="rev">Pools de hilos con <span class="k" style="font-size:.9em">Executors</span></h2>
+  <div class="cols c2-l">
+    <table class="t rev" style="align-self:start">
+      <tr><th>Pool</th><th>Hilos</th><th>Tarea</th></tr>
+      <tr><td><span class="k">newFixedThreadPool(Z)</span></td><td>Z</td><td><span class="cls">Mozo</span></td></tr>
+      <tr><td><span class="k">newFixedThreadPool(C)</span></td><td>C</td><td><span class="cls">Cocinero</span></td></tr>
+      <tr><td><span class="k">newFixedThreadPool(Y)</span></td><td>Y</td><td><span class="cls">Cajero</span></td></tr>
+      <tr><td><span class="k">newCachedThreadPool()</span></td><td>1 por cliente activo</td><td><span class="cls">Cliente</span></td></tr>
+      <tr><td><span class="k">newSingleThreadExecutor()</span></td><td>1</td><td><span class="cls">GeneradorClientes</span></td></tr>
+      <tr><td><span class="k">newSingleThreadExecutor()</span></td><td>1</td><td><span class="cls">Display</span> <span class="muted">(garantiza el orden)</span></td></tr>
+      <tr><td><span class="k">newScheduledThreadPool(1)</span></td><td>1</td><td>temporizador de T</td></tr>
+      <tr><td><span class="k">newCachedThreadPool()</span></td><td>variable (daemon)</td><td><span class="cls">ServidorWeb</span> (HTTP y SSE)</td></tr>
+    </table>
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev"><b>Fijo</b> para el personal: es una cantidad conocida. <b>Cached</b> para los clientes: es una cantidad variable.</li>
+        <li class="rev">Se separa la gestión de los hilos de la lógica de cada actor.</li>
+        <li class="rev"><span class="cls">FabricaHilos</span>: nombres legibles (<span class="k">mozo-1</span>), <span class="k">UncaughtExceptionHandler</span> y registro de los hilos para comprobar que <b>ninguno quedó vivo</b>.</li>
+        <li class="rev">Cierre con <span class="k">shutdown()</span> + <span class="k">awaitTermination()</span>, con tiempo máximo y <span class="k">volcarHilos()</span> como red de seguridad.</li>
+      </ul>
+      <pre class="code xs rev" data-src="Simulacion.correr">temporizador.schedule(senalCierre::countDown,
+                      p.t(), TimeUnit.MILLISECONDS);</pre>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>El Display tiene que ser un único hilo: con dos consumidores se perdería el orden.</li>
+    <li>No usamos System.exit: el programa termina porque terminan todos los hilos no daemon, y eso se verifica.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 13 -->
+<section class="slide" data-titulo="Future/Promise y Poison Pill">
+  <p class="kicker rev">Patrones concurrentes</p>
+  <h2 class="rev">Future/Promise · Poison Pill</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <h3 class="rev">El pago con <span class="k">CompletableFuture&lt;Ticket&gt;</span></h3>
+      <pre class="code sm rev" data-src="Caja / Cliente">// Cliente: deja el pago y recibe la promesa
+CompletableFuture&lt;Ticket&gt; futuro =
+        restaurante.caja().pagar(id, menu);
+final Ticket ticket = ⟦futuro.get()⟧;     // espera SU ticket
+
+// Cajero, en Caja.cobrar: resuelve la promesa
+pago.futuro().⟦complete(ticket)⟧;</pre>
+      <ul class="b sm">
+        <li class="rev">El cliente espera <b>su</b> resultado, sin buscarlo en una estructura compartida.</li>
+        <li class="rev">Completar el futuro <b>happens-before</b> el retorno de <span class="k">get()</span>.</li>
+      </ul>
+      <div class="rev" style="display:flex;gap:22px;align-items:center">
+        <div class="shot crop" style="--x:822;--y:486;--z:1.25;width:360px;height:225px;flex:none">
+          <img src="img/caja-cola-pago.png" alt="Cajero cobrando y clientes esperando su ticket">
+        </div>
+        <p class="muted" style="font-size:23px;line-height:1.35">Y1 cobra; los clientes 7 y 8 esperan, cada uno con <b>su</b> futuro.</p>
+      </div>
+    </div>
+    <div class="stack">
+      <h3 class="rev">Poison Pill: terminar después de lo pendiente</h3>
+      <table class="t sm rev">
+        <tr><th>Consumidor</th><th>Píldora</th></tr>
+        <tr><td>Mozos</td><td><span class="k">TareaMozo.fin()</span>, de prioridad <b>más baja</b>: primero limpian todo</td></tr>
+        <tr><td>Cajeros</td><td><span class="k">Pago.finDeTurno()</span></td></tr>
+        <tr><td>Display</td><td><span class="k">Evento.FIN</span></td></tr>
+        <tr><td>Cocineros</td><td>variante: <span class="k">Cocina.cerrar()</span>, con bandera + <span class="k">signalAll()</span></td></tr>
+      </table>
+      <div class="rev">
+        <p class="muted" style="font-size:22px;margin:6px 0 10px">Patrones aplicados en el proyecto</p>
+        <div class="chips">
+          <span class="chip">Productor-Consumidor</span><span class="chip">Monitor</span><span class="chip">Barrier</span>
+          <span class="chip">Working Threads</span><span class="chip">Future/Promise</span><span class="chip">Read-Write Lock</span><span class="chip">Poison Pill</span><span class="chip">Objeto inmutable</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Future/Promise: la promesa la crea Pago.de(...) y la resuelve el cajero; el cliente es quien consume.</li>
+    <li>La pill del mozo tiene prioridad FIN = 3, así que sale de la cola de prioridad después de todas las LIMPIAR.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 14 -->
+<section class="slide" data-titulo="Cómo evitamos los deadlocks">
+  <p class="kicker rev">Seguridad en hilos</p>
+  <h2 class="rev">Cómo evitamos los deadlocks</h2>
+  <div class="cols" style="grid-template-columns:1.2fr .8fr;gap:44px">
+    <div class="stack">
+      <svg class="diag rev grande" viewBox="0 0 1000 600" role="img" aria-label="Grafo de locks sin ciclos">
+        <defs>
+          <marker id="fl3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker>
+          <marker id="flR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--red)"/></marker>
+        </defs>
+        <path class="e draw" style="--i:0" d="M280,135 L368,135" marker-end="url(#fl3)"/>
+        <path class="e draw" style="--i:1" d="M620,135 L718,135" marker-end="url(#fl3)"/>
+        <path class="e draw" style="--i:2" d="M495,180 L495,410" marker-end="url(#fl3)"/>
+        <path class="e draw" style="--i:3" d="M280,475 L368,475" marker-end="url(#fl3)"/>
+        <path class="e draw" style="--i:4" d="M720,475 L632,475" marker-end="url(#fl3)"/>
+        <path class="e bad pop" style="--i:6" d="M440,90 C400,20 220,20 175,86" marker-end="url(#flR)"/>
+        <path class="e bad pop" style="--i:7" d="M420,182 L215,425" marker-end="url(#flR)"/>
+        <path class="e bad pop" style="--i:8" d="M845,428 L845,184" marker-end="url(#flR)"/>
+        <g class="pop" style="--i:6"><text class="lbl bad" x="310" y="22" text-anchor="middle">✕ reset() se hace antes del monitor</text></g>
+        <g class="pop" style="--i:7"><text class="lbl bad" x="170" y="300" text-anchor="middle">✕ mesaLiberada()</text><text class="lbl bad" x="170" y="326" text-anchor="middle">se llama afuera</text></g>
+        <g class="pop" style="--i:8"><text class="lbl bad" x="860" y="300">✕ SERVIR</text><text class="lbl bad" x="860" y="324">después</text><text class="lbl bad" x="860" y="348">del unlock()</text></g>
+        <g class="n lock"><rect x="30" y="90" width="250" height="90" rx="12"/><text class="t1" x="155" y="130" text-anchor="middle" style="font-size:24px">CyclicBarrier</text><text class="s" x="155" y="158" text-anchor="middle">lock interno</text></g>
+        <g class="n rec"><rect x="370" y="90" width="250" height="90" rx="12"/><text class="t1" x="495" y="130" text-anchor="middle" style="font-size:24px">Mesa</text><text class="s" x="495" y="158" text-anchor="middle">monitor</text></g>
+        <g class="n cola"><rect x="720" y="90" width="250" height="90" rx="12"/><text class="t1" x="845" y="130" text-anchor="middle" style="font-size:24px">ColaMozos</text><text class="s" x="845" y="158" text-anchor="middle">ilimitada</text></g>
+        <g class="n rec"><rect x="30" y="430" width="250" height="90" rx="12"/><text class="t1" x="155" y="470" text-anchor="middle" style="font-size:24px">SalaDeEspera</text><text class="s" x="155" y="498" text-anchor="middle">monitor</text></g>
+        <g class="n hoja"><rect x="370" y="412" width="260" height="128" rx="12"/><text class="t1" x="500" y="452" text-anchor="middle" style="font-size:22px">EstadoRestaurante</text><text class="s" x="500" y="482" text-anchor="middle">write lock</text><text class="lbl ok" x="500" y="522" text-anchor="middle">LOCK HOJA</text></g>
+        <g class="n lock"><rect x="720" y="430" width="250" height="90" rx="12"/><text class="t1" x="845" y="470" text-anchor="middle" style="font-size:24px">Cocina</text><text class="s" x="845" y="498" text-anchor="middle">ReentrantLock</text></g>
+        <text class="lbl" x="20" y="590">A → B: “toma B teniendo A”. El grafo no tiene ciclos: no puede haber espera circular.</text>
+      </svg>
+    </div>
+    <div class="stack">
+      <p class="rev" style="font-size:26px;color:var(--muted)">Coffman: rompemos la <b style="color:var(--ink)">espera circular</b>.</p>
+      <ul class="b xs">
+        <li class="rev"><b>Sin locks anidados</b> entre recursos. Única cadena: <span class="k">barrera → mesa</span>, nunca al revés.</li>
+        <li class="rev"><b>Lock hoja:</b> con el write lock de <span class="k">EstadoRestaurante</span> no se toma nada más.</li>
+        <li class="rev"><b>Colas ilimitadas:</b> encolar con un monitor tomado nunca bloquea.</li>
+        <li class="rev"><span class="k">wait()</span> y <span class="k">take()</span> sin otros locks tomados (el <span class="k">wait</span> suelta el suyo).</li>
+        <li class="rev"><b>La carrera mozo/cierre</b> se resuelve dentro del monitor de la mesa (siguiente slide).</li>
+        <li class="rev">Sin esperas infinitas: <span class="k">tryAcquire</span> con timeout y <span class="k">awaitTermination</span> con límite.</li>
+        <li class="rev"><b>Inanición:</b> colas FIFO, semáforo y lock justos, prioridades acotadas.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Leer el grafo: las flechas grises son “tomo B teniendo A”; las rojas son órdenes que evitamos a propósito.</li>
+    <li>Mesa → EstadoRestaurante y Mesa → ColaMozos son seguras porque esos son locks hoja o colas que no bloquean.</li>
+    <li>terminarLimpieza hace barrera.reset() ANTES del synchronized(this) para no invertir el orden barrera → mesa.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 15 -->
+<section class="slide" data-titulo="Carrera mozo / cierre">
+  <p class="kicker rev">Condición de carrera resuelta en el monitor</p>
+  <h2 class="rev">“El mozo toma el pedido” contra “cierra el local”</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <pre class="code sm rev" data-src="Mesa.java">public synchronized List&lt;Eleccion&gt; tomarPedido(/* … */) {
+    if (⟦cancelada⟧) { notifyAll(); return null; }
+    ⟦pedidoTomado = true;⟧
+    // …
+}
+
+public synchronized void cerrar() {
+    cerrando = true;
+    if (⟦!pedidoTomado⟧) { ⟦cancelada = true;⟧ /* … */ }
+    notifyAll();
+}</pre>
+      <div class="callout rev">Los dos métodos son <span class="k">synchronized</span> sobre la <b>misma</b> mesa: se ejecutan uno después del otro y gana el que entra primero al monitor.</div>
+    </div>
+    <div class="stack">
+      <div class="carril a rev">
+        <h3><span class="badge g">Caso A</span> entra primero <span class="k">tomarPedido</span></h3>
+        <ol>
+          <li><span class="k">pedidoTomado = true</span></li>
+          <li><span class="k">cerrar()</span> ve el pedido tomado y no cancela nada</li>
+          <li>Los P clientes comen, pagan y se van</li>
+        </ol>
+      </div>
+      <div class="carril b rev">
+        <h3><span class="badge">Caso B</span> entra primero <span class="k">cerrar</span></h3>
+        <ol>
+          <li><span class="k">cancelada = true</span> y <span class="k">notifyAll()</span></li>
+          <li><span class="k">tomarPedido</span> devuelve <span class="k">null</span> y el mozo descarta la tarea</li>
+          <li>Los P clientes se van sin pedir; la mesa queda SUCIA y se limpia igual</li>
+        </ol>
+      </div>
+      <p class="rev" style="font-size:25px"><span class="ok">Nunca hay un estado intermedio.</span> <span class="muted">Lo probamos con 25 000 carreras sobre una mesa aislada.</span></p>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Interpretación: “realizó su pedido” significa que el mozo ya ejecutó tomarPedido.</li>
+    <li>No hace falta otro lock ni otra bandera atómica: el propio monitor de la mesa serializa las dos operaciones.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 16 -->
+<section class="slide" data-titulo="Visibilidad y happens-before">
+  <p class="kicker rev">Problemas de visibilidad</p>
+  <h2 class="rev">Visibilidad: <span class="k" style="font-size:.9em">volatile</span>, atómicos y happens-before</h2>
+  <div class="cols c2-l">
+    <table class="t sm rev" style="align-self:start">
+      <tr><th>Lo que hace un hilo…</th><th>…lo ve el otro al</th><th>Dónde</th></tr>
+      <tr><td>salir de <span class="k">synchronized</span></td><td>entrar al mismo monitor</td><td>Mesa, SalaDeEspera</td></tr>
+      <tr><td><span class="k">unlock()</span></td><td><span class="k">lock()</span></td><td>Cocina, EstadoRestaurante</td></tr>
+      <tr><td><span class="k">put()</span> en una cola</td><td><span class="k">take()</span> de ese elemento</td><td>mozos, cajeros, Display</td></tr>
+      <tr><td><span class="k">release()</span></td><td><span class="k">tryAcquire()</span></td><td>puerta</td></tr>
+      <tr><td><span class="k">countDown()</span></td><td>retorno de <span class="k">await()</span></td><td>latches</td></tr>
+      <tr><td><span class="k">complete()</span></td><td>retorno de <span class="k">get()</span></td><td>pago</td></tr>
+      <tr><td>terminar las tareas del pool</td><td><span class="k">awaitTermination</span></td><td>coordinador</td></tr>
+      <tr><td>escribir <span class="k">volatile</span> / atómico</td><td>leer esa variable</td><td><span class="k">abierto</span>, contadores</td></tr>
+    </table>
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev"><span class="k">volatile</span>: <span class="k">EstadoRestaurante.inicioNanos</span>, <span class="k">Simulacion.resultado</span>, <span class="k">Display.ultimaSecuencia</span>.
+          <span class="why">Un solo escritor y varios lectores: alcanza con visibilidad, no hace falta exclusión.</span></li>
+        <li class="rev"><span class="k">Plato.estado</span> <b>no</b> es <span class="k">volatile</span>: solo se toca con el lock de la cocina.</li>
+        <li class="rev"><b>Publicación segura:</b> los mensajes son inmutables y viajan por colas concurrentes.</li>
+        <li class="rev"><span class="k">CopyOnWriteArrayList</span> para los suscriptores SSE y los hilos creados. <span class="k">ThreadLocalRandom</span> en <span class="cls">Aleatorio</span>.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Cada dato compartido está cubierto por alguna de estas relaciones, así que nunca se leen valores viejos de la caché.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 17 -->
+<section class="slide" data-titulo="Cierre ordenado en T">
+  <p class="kicker rev" style="text-transform:none;letter-spacing:.06em">Simulacion.correr()</p>
+  <h2 class="rev">Cierre ordenado en T, paso a paso</h2>
+  <div class="cols c2-r">
+    <ol class="pasos">
+      <li class="rev"><div>El temporizador libera <span class="k">senalCierre</span><small>El coordinador y el generador se despiertan al instante.</small></div></li>
+      <li class="rev"><div><span class="k">restaurante.cerrarPuertas()</span><small><span class="k">abierto = false</span> (CAS). Los de afuera salen de su <span class="k">tryAcquire</span> y se van.</small></div></li>
+      <li class="rev"><div><span class="k">sala().cerrar()</span><small><span class="k">notifyAll</span>: los grupos sin mesa se retiran.</small></div></li>
+      <li class="rev"><div><span class="k">m.cerrar()</span> en cada mesa<small>Sin pedido tomado: se cancela. Con pedido: sigue normalmente.</small></div></li>
+      <li class="rev"><div><span class="k">apagar("clientes", poolClientes)</span><small>Los que pidieron comen, pagan y salen.</small></div></li>
+      <li class="rev"><div><span class="k">encolarFin(Z)</span> · <span class="k">cocina().cerrar()</span> · <span class="k">caja().cerrar(Y)</span><small>Después, <span class="k">empleadosTerminados.await()</span>.</small></div></li>
+      <li class="rev"><div>Se apagan los pools y se llama a <span class="k">finalizarDisplay()</span><small>Con <span class="k">Evento.FIN</span>, el Display vacía la cola y termina.</small></div></li>
+      <li class="rev"><div><span class="k">verificarInvariantes()</span> · <span class="k">log.cerrar()</span><small>En modo web se publica el evento SSE <span class="k">fin</span>.</small></div></li>
+    </ol>
+    <div class="stack">
+      <div class="shot rev" style="position:relative">
+        <img src="img/cierre-cerrando.png" alt="Restaurante en estado CERRANDO con la puerta roja">
+        <span class="ring" style="left:16.3%;top:.4%;width:7.6%;height:5%"></span>
+        <span class="ring" style="left:78%;top:55%;width:21.3%;height:42%"></span>
+        <span class="cap">CERRANDO · la fila de afuera se fue · M1 sigue: ya había pedido</span>
+      </div>
+      <div class="callout blue rev">Lo más difícil: para cada espera (afuera, sala, barrera, mozo, <span class="k">take()</span>) hubo que definir <b>quién la despierta</b> y <b>cómo se entera</b> el hilo de que tiene que irse.</div>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Desde que cierran las puertas, la sala ya no asigna mesas nuevas (asignarMesas verifica abierto).</li>
+    <li>La barrera nunca se traba: los P clientes de una mesa siempre llegan a la barrera, incluso los cancelados.</li>
+    <li>En la captura: el estado CERRANDO, la puerta roja y los eventos “se va sin entrar”.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 18 -->
+<section class="slide" data-titulo="Display, snapshot y log">
+  <p class="kicker rev">Visualización en orden</p>
+  <h2 class="rev">Display + snapshot inmutable + log</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <svg class="diag rev" viewBox="0 0 860 300" role="img" aria-label="Del cambio al navegador">
+        <defs><marker id="fl4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker></defs>
+        <path id="d1" class="e" d="M200,60 L258,60" marker-end="url(#fl4)" data-flujo="#7a4fa3,1.1,2"/>
+        <path id="d2" class="e" d="M460,60 L518,60" marker-end="url(#fl4)" data-flujo="#7a4fa3,1.1,2"/>
+        <path id="d3" class="e" d="M690,100 C690,150 640,170 600,198" marker-end="url(#fl4)" data-flujo="#7a4fa3,1.3,1"/>
+        <path id="d4" class="e" d="M690,100 C690,150 700,170 720,198" marker-end="url(#fl4)" data-flujo="#7a4fa3,1.3,1"/>
+        <path id="d5" class="e" d="M600,100 C560,150 420,170 380,198" marker-end="url(#fl4)" data-flujo="#7a4fa3,1.3,1"/>
+        <g class="n lock"><rect x="0" y="20" width="200" height="80" rx="12"/><text class="t1" x="100" y="56" text-anchor="middle" style="font-size:22px">notificar()</text><text class="s" x="100" y="82" text-anchor="middle">write lock</text></g>
+        <g class="n cola"><rect x="260" y="20" width="200" height="80" rx="12"/><text class="t1" x="360" y="56" text-anchor="middle" style="font-size:22px">Evento</text><text class="s" x="360" y="82" text-anchor="middle">seq + Snapshot</text></g>
+        <g class="n actor"><rect x="520" y="20" width="240" height="80" rx="12"/><text class="t1" x="640" y="56" text-anchor="middle" style="font-size:22px">Display</text><text class="s" x="640" y="82" text-anchor="middle">take() en orden</text></g>
+        <g class="n"><rect x="280" y="200" width="180" height="70" rx="12"/><text class="t1" x="370" y="244" text-anchor="middle" style="font-size:21px">log .txt</text></g>
+        <g class="n"><rect x="500" y="200" width="160" height="70" rx="12"/><text class="t1" x="580" y="244" text-anchor="middle" style="font-size:21px">consola</text></g>
+        <g class="n"><rect x="690" y="200" width="170" height="70" rx="12"/><text class="t1" x="775" y="244" text-anchor="middle" style="font-size:21px">CanalSSE</text></g>
+        <g class="capa-puntos"></g>
+      </svg>
+      <pre class="code sm rev" data-src="Snapshot.java">public record Snapshot(long secuencia, /* … */) {
+    public Snapshot {          // constructor compacto
+        clientes = List.copyOf(clientes);
+        mesas = List.copyOf(mesas);
+        // … todas las listas se copian
+    }
+}</pre>
+    </div>
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev"><b>Snapshot inmutable</b> (records + <span class="k">List.copyOf</span>): es seguro para hilos <b>por construcción</b>. El Display lo lee sin ningún lock.</li>
+        <li class="rev">La vista está separada de los objetos reales: mostrar el estado <b>nunca toma los locks</b> de mesas ni de la cocina.</li>
+        <li class="rev">El Display verifica que las secuencias sean crecientes; si un evento falla, lo loguea y sigue.</li>
+        <li class="rev"><span class="cls">LogArchivo</span>: cada evento + el estado completo (<span class="k">FormatoTexto.estado</span>).</li>
+        <li class="rev"><span class="cls">CanalSSE</span>: una cola por navegador, historial y reconexión con <span class="k">Last-Event-ID</span>.</li>
+        <li class="rev"><span class="k">app.js</span> dibuja el último snapshot en cada <span class="k">requestAnimationFrame</span>.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Cada evento lleva el estado del momento en que se notificó, aunque el Display lo procese más tarde.</li>
+    <li>Un navegador lento no frena al Display: cada suscriptor SSE tiene su propia LinkedBlockingQueue.</li>
+  </ul></aside>
+</section>
+
+<!-- ===================================================================== 19 -->
+<section class="slide" data-titulo="Conclusión">
+  <p class="kicker rev">Cierre</p>
+  <h2 class="rev">Conclusión</h2>
+  <div class="cols c2">
+    <div class="stack">
+      <h3 class="rev">Elegir la herramienta según la forma del problema</h3>
+      <table class="t sm rev">
+        <tr><td>“esperar a que todos elijan”</td><td><span class="k">CyclicBarrier</span> · <span class="cls">Mesa</span></td></tr>
+        <tr><td>varias condiciones sobre un estado</td><td>monitor · <span class="cls">Mesa</span>, <span class="cls">SalaDeEspera</span></td></tr>
+        <tr><td>operación que no es un simple <i>take</i></td><td><span class="k">ReentrantLock</span> + <span class="k">Condition</span> · <span class="cls">Cocina</span></td></tr>
+        <tr><td>muchos escritores, pocos lectores</td><td><span class="k">ReentrantReadWriteLock</span> · <span class="cls">EstadoRestaurante</span></td></tr>
+        <tr><td>capacidad limitada</td><td><span class="k">Semaphore</span> · puerta</td></tr>
+        <tr><td>contadores y banderas</td><td>atómicos · <span class="cls">Contadores</span>, <span class="cls">Pedido</span></td></tr>
+        <tr><td>pasarse trabajo</td><td><span class="k">BlockingQueue</span> · mozos, caja, eventos</td></tr>
+      </table>
+    </div>
+    <div class="stack">
+      <ul class="b sm">
+        <li class="rev">Es más fácil <b>prevenir deadlocks por diseño</b> (lock hoja, sin anidar, colas ilimitadas) que encontrarlos depurando.</li>
+        <li class="rev">El <b>cierre</b>, no el caso normal, fue lo que más diseño exigió.</li>
+        <li class="rev">Los <b>objetos inmutables</b> simplifican muchísimo compartir datos entre hilos.</li>
+        <li class="rev">El mapa en vivo permite <b>ver</b> la concurrencia: la barrera, dos cocineros en un pedido, el cierre.</li>
+      </ul>
+      <p class="rev" style="font-size:44px;font-weight:750;color:var(--accent);margin-top:auto">¡Gracias! ¿Preguntas?</p>
+    </div>
+  </div>
+  <aside class="notes"><ul>
+    <li>Si hay tiempo, mostrar la app en vivo: .\ejecutar.ps1 y “Iniciar simulación”.</li>
+  </ul></aside>
+</section>
+
+</div>
+</div>
+
+<div class="progreso" aria-hidden="true"><div></div></div>
+<div class="hud">
+  <button type="button" data-acc="prev" title="Anterior (←)">◀</button>
+  <span class="num">1 / 20</span>
+  <button type="button" data-acc="next" title="Siguiente (→)">▶</button>
+  <button type="button" data-acc="notas" title="Notas del orador (N)">Notas</button>
+  <button type="button" data-acc="full" title="Pantalla completa (F)">⛶</button>
+  <button type="button" data-acc="ayuda" title="Atajos (?)">?</button>
+</div>
+<div class="notas" hidden></div>
+<div class="ayuda" hidden>
+  <div>
+    <b>Atajos</b><br>
+    <kbd>→</kbd> <kbd>Espacio</kbd> <kbd>PgDn</kbd> o clic: siguiente · <kbd>←</kbd> <kbd>PgUp</kbd> o clic en el borde izquierdo: anterior<br>
+    <kbd>Inicio</kbd> / <kbd>Fin</kbd>: primera y última · <kbd>F</kbd>: pantalla completa · <kbd>N</kbd>: notas del orador<br>
+    <kbd>T</kbd>: tema claro/oscuro · <kbd>?</kbd>: esta ayuda · <kbd>Esc</kbd>: cerrar · URL <kbd>#7</kbd>: ir a la slide 7
+  </div>
+</div>
+
+<script src="presentacion.js"></script>
+</body>
+</html>
