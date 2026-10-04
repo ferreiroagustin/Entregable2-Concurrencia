@@ -16,7 +16,7 @@ public final class Config {
     // ------------------------------------------------------------------
 
     /** T: duración de la simulación (el restaurante cierra al llegar a T). */
-    public static final long T = 60_000;
+    public static final long T = 30_000;
     /** M: cantidad de mesas. */
     public static final int M = 4;
     /** P: personas por mesa. */
