@@ -7,6 +7,10 @@
   const deck = document.querySelector(".deck");
   const slides = Array.from(document.querySelectorAll(".slide"));
   const total = slides.length;
+  // Las slides con la clase "anexo" quedan fuera del recorrido principal y de su numeración.
+  const primerAnexo = slides.findIndex((sl) => sl.classList.contains("anexo"));
+  const principal = primerAnexo < 0 ? total : primerAnexo;
+  const etiqueta = (n) => (n < principal ? `${n + 1} / ${principal}` : `Anexo ${n - principal + 1} / ${total - principal}`);
   const barra = document.querySelector(".progreso > div");
   const num = document.querySelector(".hud .num");
   const panelNotas = document.querySelector(".notas");
@@ -34,7 +38,7 @@
     // pie con número
     const pie = document.createElement("div");
     pie.className = "pie";
-    pie.innerHTML = `<span>Restaurante concurrente · Ferreiro · Bruschera</span><span>${n + 1} / ${total}</span>`;
+    pie.innerHTML = `<span>Restaurante concurrente · Ferreiro · Bruschera</span><span>${etiqueta(n)}</span>`;
     if (!sl.classList.contains("portada")) sl.appendChild(pie);
   });
 
@@ -117,8 +121,8 @@
       sl.setAttribute("aria-hidden", i === n ? "false" : "true");
     });
     actual = n;
-    barra.style.width = ((n + 1) / total) * 100 + "%";
-    num.textContent = `${n + 1} / ${total}`;
+    barra.style.width = Math.min(1, (n + 1) / principal) * 100 + "%";
+    num.textContent = etiqueta(n);
     document.title = `${n + 1}. ${slides[n].dataset.titulo || "Restaurante concurrente"} · Restaurante concurrente`;
     if (!desdeHash) history.replaceState(null, "", "#" + (n + 1));
     pintarNotas();
@@ -145,7 +149,7 @@
       case "ArrowLeft": case "ArrowUp": case "PageUp": case "Backspace":
         e.preventDefault(); anterior(); break;
       case "Home": ir(0); break;
-      case "End": ir(total - 1); break;
+      case "End": ir(actual < principal - 1 ? principal - 1 : total - 1); break;
       case "f": case "F": pantallaCompleta(); break;
       case "n": case "N": panelNotas.hidden = !panelNotas.hidden; break;
       case "t": case "T":
