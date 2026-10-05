@@ -115,32 +115,36 @@
   <h2 class="rev">Exclusión mutua: cinco herramientas</h2>
   <div class="cols c2-l">
     <table class="t sm rev" style="align-self:start">
-      <tr><th>Herramienta</th><th>Dónde</th><th>Por qué esa</th></tr>
-      <tr><td><span class="k">synchronized</span></td><td><span class="cls">Mesa</span> · <span class="cls">SalaDeEspera</span></td><td>Monitor: varias condiciones sobre un mismo estado, con <span class="k">wait</span>/<span class="k">notifyAll</span></td></tr>
-      <tr><td><span class="k">ReentrantLock</span> + <span class="k">Condition</span></td><td><span class="cls">Cocina</span></td><td>Buscar un plato pendiente y marcarlo es <b>una</b> operación atómica. Lock justo</td></tr>
-      <tr><td><span class="k">ReentrantReadWriteLock</span></td><td><span class="cls">EstadoRestaurante</span></td><td>Cambio + foto + evento bajo el write lock; las lecturas se comparten</td></tr>
-      <tr><td><span class="k">Semaphore(P·M)</span></td><td>la puerta</td><td>Capacidad limitada: el resto espera afuera</td></tr>
-      <tr><td>Clases atómicas</td><td><span class="k">abierto</span> · <span class="k">platosPendientes</span> · <span class="cls">Contadores</span></td><td>Banderas y contadores sin lock (CAS), siempre visibles</td></tr>
+      <tr><th>Herramienta</th><th>Dónde</th><th>Para qué</th></tr>
+      <tr><td><span class="k">synchronized</span></td><td><span class="cls">Mesa</span> · <span class="cls">SalaDeEspera</span></td><td>Proteger el estado <b>y</b> esperar condiciones (<span class="k">wait</span>/<span class="k">notifyAll</span>)</td></tr>
+      <tr><td><span class="k">ReentrantLock</span> + <span class="k">Condition</span></td><td><span class="cls">Cocina</span></td><td>Buscar y marcar un plato en <b>un solo paso</b>. Lock justo</td></tr>
+      <tr><td><span class="k">ReentrantReadWriteLock</span></td><td><span class="cls">EstadoRestaurante</span></td><td>Un escritor a la vez; los lectores, en paralelo</td></tr>
+      <tr><td><span class="k">Semaphore(P·M)</span></td><td>la puerta</td><td>Como máximo P·M adentro; el resto espera afuera</td></tr>
+      <tr><td>Clases atómicas</td><td><span class="k">abierto</span> · <span class="k">platosPendientes</span> · <span class="cls">Contadores</span></td><td>Banderas y contadores sin lock</td></tr>
     </table>
     <div class="stack">
       <pre class="code xs rev" data-src="Cocina.tomarPlato">lock.lock();
 try {
     while (true) {
+        // busca un plato sin cocinar y lo marca
         Plato plato = ⟦primerPlatoPendiente()⟧;
-        if (plato != null) { /* … */ return plato; }
+        if (plato != null) return plato;
         if (cerrada) return null;
+        // no hay: espera un pedido nuevo
         ⟦hayPlatos.await();⟧
     }
 } finally { lock.unlock(); }</pre>
       <ul class="b sm">
-        <li class="rev"><b>Un lock por recurso</b>, no uno global: un lock global sería correcto, pero serializa a todos los actores.</li>
+        <li class="rev"><b>Un lock por recurso</b>, no uno global: así todo sigue en paralelo.</li>
         <li class="rev">Todo <span class="k">unlock()</span> y <span class="k">release()</span> va en un <span class="k">finally</span>.</li>
       </ul>
     </div>
   </div>
   <aside class="notes"><ul>
-    <li>La consigna pide al menos dos; usamos cinco porque cada recurso tiene una forma distinta. Un renglón por herramienta, sin detenerse.</li>
-    <li>El ejemplo es la cocina: el cocinero no saca el primer pedido, toma un plato pendiente del primer pedido que tenga uno. Por eso varios cocineros reparten un mismo pedido y una BlockingQueue no alcanzaba.</li>
+    <li>Intro: varios hilos comparten datos; si dos los modifican a la vez hay condiciones de carrera. La consigna pide al menos dos herramientas; usamos cinco, una por tipo de recurso.</li>
+    <li>Leer la tabla de a un renglón, sin detenerse. Donde sí frenar: la cocina, con el código.</li>
+    <li>Cocina: el cocinero no saca un pedido entero; busca un plato pendiente del primer pedido que tenga uno y lo marca, todo en un paso. Así nunca dos agarran el mismo plato y varios cocineros reparten un pedido. Una BlockingQueue no alcanzaba.</li>
+    <li>Lock global: sería correcto, pero solo un hilo trabajaría a la vez.</li>
     <li>Si preguntan por alguna en detalle, cada una tiene su slide en el anexo.</li>
   </ul></aside>
 </section>
@@ -179,9 +183,9 @@ try {
 </section>
 
 <!-- ===================================================================== 5 -->
-<section class="slide" data-titulo="Barreras">
+<section class="slide" data-titulo="Barrera">
   <p class="kicker rev">Sincronización</p>
-  <h2 class="rev">Barreras: <span class="k" style="font-size:.9em">CyclicBarrier</span> y <span class="k" style="font-size:.9em">CountDownLatch</span></h2>
+  <h2 class="rev">Barrera</h2>
   <div class="cols" style="grid-template-columns:1.2fr .8fr">
     <div class="stack">
       <pre class="code sm rev" data-src="Mesa.java">this.barrera = new CyclicBarrier(capacidad, ⟦this::llamarMozo⟧);
@@ -192,8 +196,7 @@ private synchronized void llamarMozo() {   // la ejecuta el último
 }</pre>
       <ul class="b sm">
         <li class="rev"><b>Una barrera de P partes por mesa.</b> Nadie llama al mozo hasta que eligieron los P; la <b>acción de barrera</b> lo llama una sola vez.</li>
-        <li class="rev"><b>Cíclica:</b> se reutiliza con cada grupo que ocupa la mesa. Si se rompe, se cancela la ocupación y se hace <span class="k">reset()</span> al limpiar.</li>
-        <li class="rev"><span class="k">CountDownLatch</span>, dos: <span class="k">senalCierre</span> (el temporizador avisa que llegó T) y <span class="k">empleadosTerminados</span> (Z+C+Y: el coordinador espera a todo el personal).</li>
+        <li class="rev"><b>Cíclica:</b> se reutiliza con cada grupo que ocupa la mesa.</li>
       </ul>
     </div>
     <div class="shot crop rev" style="--x:365;--y:170;--z:1.2;width:570px;height:624px;align-self:start">
@@ -206,7 +209,6 @@ private synchronized void llamarMozo() {   // la ejecuta el último
     <li>Es exactamente la regla: luego de que los P eligen, llaman al mozo. Por eso preferimos CyclicBarrier a Phaser: P es fijo.</li>
     <li>En el cierre, los cancelados también atraviesan la barrera, así que nunca queda un await colgado.</li>
     <li>Detalle si preguntan: esperarCompaneros() no es synchronized; si lo fuera, el primero esperaría en la barrera con el monitor tomado y los demás no podrían llegar.</li>
-    <li>senalCierre: el coordinador espera con await() y el generador de clientes con await(tp) en vez de sleep. empleadosTerminados: cada empleado hace countDown en su finally.</li>
   </ul></aside>
 </section>
 
