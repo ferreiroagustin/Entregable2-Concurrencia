@@ -214,9 +214,8 @@ private synchronized void llamarMozo() {   // la ejecuta el último
 <section class="slide" data-titulo="Productor-Consumidor">
   <p class="kicker rev">Pasaje de mensajes · patrón principal</p>
   <h2 class="rev">Pasaje de mensajes: Productor-Consumidor</h2>
-  <div class="cols c2">
-    <div class="stack">
-      <svg class="diag rev" viewBox="0 0 900 420" role="img" aria-label="Productores, cola de prioridad y mozos consumidores">
+  <div class="stack" style="flex:1;align-items:center;justify-content:center;gap:32px">
+      <svg class="diag rev" style="width:1000px" viewBox="0 0 900 420" role="img" aria-label="Productores, cola de prioridad y mozos consumidores">
         <defs><marker id="fl2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker></defs>
         <path id="pc1" class="e" d="M240,70 C290,70 290,185 328,185" marker-end="url(#fl2)" data-flujo="#b97c0c,1.8,2"/>
         <path id="pc2" class="e" d="M240,210 L328,210" marker-end="url(#fl2)" data-flujo="#c2562d,1.5,2"/>
@@ -233,25 +232,13 @@ private synchronized void llamarMozo() {   // la ejecuta el último
         <text class="lbl" x="635" y="214" text-anchor="middle">take()</text>
         <g class="capa-puntos"></g>
       </svg>
-      <table class="t sm rev">
+      <table class="t sm rev" style="width:1200px">
         <tr><th>Productores</th><th>Búfer</th><th>Consumidores</th></tr>
         <tr><td>Mesas · cocineros · clientes</td><td><span class="k">ColaMozos</span> · <span class="muted">PriorityBlockingQueue</span></td><td>Z mozos</td></tr>
         <tr><td>Clientes</td><td><span class="k">Caja</span> · <span class="muted">LinkedBlockingQueue</span></td><td>Y cajeros</td></tr>
         <tr><td>Mozos</td><td><span class="k">Cocina</span> (lock + Condition)</td><td>C cocineros</td></tr>
         <tr><td>Todos los actores</td><td><span class="k">colaEventos</span> · <span class="muted">LinkedBlockingQueue</span></td><td>1 Display</td></tr>
       </table>
-    </div>
-    <div class="stack">
-      <h3 class="rev">Por qué es el patrón principal</h3>
-      <ul class="b sm">
-        <li class="rev"><b>Desacopla:</b> el productor no sabe quién atiende. Los mozos no tienen mesas asignadas.</li>
-        <li class="rev"><b>Sin espera activa:</b> <span class="k">take()</span> bloquea sin gastar CPU (“si no hay nada que hacer, esperan”).</li>
-        <li class="rev"><b>Balancea:</b> Y cajeros sobre una sola fila.</li>
-        <li class="rev"><b>Ordena:</b> un consumidor sobre una cola FIFO, así que el Display respeta el orden real.</li>
-        <li class="rev"><b>Cierre limpio:</b> una <i>poison pill</i> al final de la cola.</li>
-        <li class="rev"><b>Sin deadlocks:</b> producir nunca bloquea.</li>
-      </ul>
-    </div>
   </div>
   <aside class="notes"><ul>
     <li>Las colas bloqueantes son nuestra herramienta de pasaje de mensajes: los hilos no comparten estado, se pasan mensajes inmutables (TareaMozo, Pago, Evento).</li>
@@ -308,22 +295,15 @@ private synchronized void llamarMozo() {   // la ejecuta el último
   <h2 class="rev">Deadlocks y visibilidad</h2>
   <div class="cols" style="grid-template-columns:1.2fr .8fr;gap:44px">
     <div class="stack">
-      <svg class="diag rev grande" viewBox="0 0 1000 600" role="img" aria-label="Grafo de locks sin ciclos">
+      <svg class="diag rev grande" viewBox="0 70 1000 530" role="img" aria-label="Grafo de locks sin ciclos">
         <defs>
           <marker id="fl3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9b8672"/></marker>
-          <marker id="flR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--red)"/></marker>
         </defs>
         <path class="e draw" style="--i:0" d="M280,135 L368,135" marker-end="url(#fl3)"/>
         <path class="e draw" style="--i:1" d="M620,135 L718,135" marker-end="url(#fl3)"/>
         <path class="e draw" style="--i:2" d="M495,180 L495,410" marker-end="url(#fl3)"/>
         <path class="e draw" style="--i:3" d="M280,475 L368,475" marker-end="url(#fl3)"/>
         <path class="e draw" style="--i:4" d="M720,475 L632,475" marker-end="url(#fl3)"/>
-        <path class="e bad pop" style="--i:6" d="M440,90 C400,20 220,20 175,86" marker-end="url(#flR)"/>
-        <path class="e bad pop" style="--i:7" d="M420,182 L215,425" marker-end="url(#flR)"/>
-        <path class="e bad pop" style="--i:8" d="M845,428 L845,184" marker-end="url(#flR)"/>
-        <g class="pop" style="--i:6"><text class="lbl bad" x="310" y="22" text-anchor="middle">✕ reset() se hace antes del monitor</text></g>
-        <g class="pop" style="--i:7"><text class="lbl bad" x="170" y="300" text-anchor="middle">✕ mesaLiberada()</text><text class="lbl bad" x="170" y="326" text-anchor="middle">se llama afuera</text></g>
-        <g class="pop" style="--i:8"><text class="lbl bad" x="860" y="300">✕ SERVIR</text><text class="lbl bad" x="860" y="324">después</text><text class="lbl bad" x="860" y="348">del unlock()</text></g>
         <g class="n lock"><rect x="30" y="90" width="250" height="90" rx="12"/><text class="t1" x="155" y="130" text-anchor="middle" style="font-size:24px">CyclicBarrier</text><text class="s" x="155" y="158" text-anchor="middle">lock interno</text></g>
         <g class="n rec"><rect x="370" y="90" width="250" height="90" rx="12"/><text class="t1" x="495" y="130" text-anchor="middle" style="font-size:24px">Mesa</text><text class="s" x="495" y="158" text-anchor="middle">monitor</text></g>
         <g class="n cola"><rect x="720" y="90" width="250" height="90" rx="12"/><text class="t1" x="845" y="130" text-anchor="middle" style="font-size:24px">ColaMozos</text><text class="s" x="845" y="158" text-anchor="middle">ilimitada</text></g>
@@ -336,7 +316,7 @@ private synchronized void llamarMozo() {   // la ejecuta el último
     <div class="stack">
       <h3 class="rev">Sin deadlocks: no hay espera circular</h3>
       <ul class="b xs">
-        <li class="rev"><b>Sin locks anidados</b> entre recursos. Única cadena: <span class="k">barrera → mesa</span>, nunca al revés.</li>
+        <li class="rev"><b>Mesa, sala y cocina</b> nunca se llaman entre sí con el lock tomado. Única cadena: <span class="k">barrera → mesa</span>, nunca al revés.</li>
         <li class="rev"><b>Lock hoja:</b> con el write lock de <span class="k">EstadoRestaurante</span> no se toma nada más.</li>
         <li class="rev"><b>Colas ilimitadas:</b> encolar con un monitor tomado nunca bloquea.</li>
       </ul>
@@ -349,9 +329,9 @@ private synchronized void llamarMozo() {   // la ejecuta el último
     </div>
   </div>
   <aside class="notes"><ul>
-    <li>Leer el grafo: las flechas grises son “tomo B teniendo A”; las rojas son órdenes que evitamos a propósito.</li>
+    <li>Leer el grafo: cada flecha es “tomo B teniendo A”. Todas van en el mismo sentido: no hay ciclos, así que no puede haber espera circular.</li>
     <li>Mesa → EstadoRestaurante y Mesa → ColaMozos son seguras porque esos son locks hoja o colas que no bloquean.</li>
-    <li>terminarLimpieza hace barrera.reset() ANTES del synchronized(this) para no invertir el orden barrera → mesa.</li>
+    <li>Regla general: cualquier otra llamada a un recurso se hace después de soltar el lock propio.</li>
     <li>También: la carrera mozo/cierre se resuelve dentro del monitor de la mesa; no hay esperas infinitas (tryAcquire con timeout, awaitTermination con límite); contra la inanición, colas FIFO y semáforo y lock justos.</li>
     <li>Visibilidad: cada dato compartido está cubierto por una relación happens-before. El detalle está en el anexo.</li>
   </ul></aside>
