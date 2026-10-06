@@ -278,7 +278,6 @@ private synchronized void llamarMozo() {   // la ejecuta el último
       <ul class="b sm">
         <li class="rev"><span class="k">InterruptedException</span>: se restaura la bandera y el hilo termina en orden.</li>
         <li class="rev"><span class="k">finally</span> en todo <span class="k">unlock()</span>, <span class="k">release()</span> y <span class="k">countDown()</span>: nada queda tomado.</li>
-        <li class="rev"><span class="cls">FabricaHilos</span> pone un <span class="k">UncaughtExceptionHandler</span>: lo inesperado va a la consola y al log.</li>
         <li class="rev">Un error en un evento no mata al <span class="cls">Display</span>: lo registra y sigue.</li>
       </ul>
     </div>
